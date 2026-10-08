@@ -102,9 +102,11 @@ export const db = createDbInterface()
 export async function initDb() {
   const pool = getPool()
   const statements = [
+    // username 用 191 而非 255：utf8mb4 下 191*4=764 字节，
+    // 兼容 MySQL 5.5/5.6 的 767 字节索引上限（255 会报 Specified key was too long）
     `CREATE TABLE IF NOT EXISTS users (
       id VARCHAR(36) PRIMARY KEY,
-      username VARCHAR(255) NOT NULL UNIQUE,
+      username VARCHAR(191) NOT NULL UNIQUE,
       password_hash VARCHAR(255) NOT NULL,
       is_guest TINYINT NOT NULL DEFAULT 0,
       created_at BIGINT
