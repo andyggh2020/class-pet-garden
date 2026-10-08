@@ -20,7 +20,11 @@ services:
       start_period: 20s
 
   app:
-    image: ghcr.io/3bdjrvhs50kizijb5/class-pet-garden:latest
+    # 使用本地源码构建镜像（部署的是自己的代码，而非他人镜像）
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: class-pet-garden:local
     container_name: class-pet-garden-app
     restart: unless-stopped
     ports:
