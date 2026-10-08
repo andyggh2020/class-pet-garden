@@ -6,7 +6,11 @@ const path = require('path')
 function loadEnvFile(file) {
   const env = {}
   if (!fs.existsSync(file)) return env
-  const content = fs.readFileSync(file, 'utf8')
+  // 去掉 UTF-8 BOM，否则第一行会变成 "\uFEFFDB_HOST"
+  let content = fs.readFileSync(file, 'utf8')
+  if (content.charCodeAt(0) === 0xfeff) {
+    content = content.slice(1)
+  }
   for (const rawLine of content.split(/\r?\n/)) {
     const line = rawLine.trim()
     if (!line || line.startsWith('#')) continue
