@@ -33,7 +33,7 @@ const features = [
 const flow = [
   { step: '01', icon: 'school', who: '老师', title: '创建班级', desc: '生成班级码，一键导入学生名单，30 秒开课。' },
   { step: '02', icon: 'rate_review', who: '课堂', title: '实时评价', desc: '课堂表现随手记录，学生喂养宠物、积累积分。' },
-  { step: '03', icon: 'family_restroom', who: '家长', title: '见证成长', desc: '扫码加入，实时看见孩子成长，按需开通会员。' },
+  { step: '03', icon: 'person', who: '家长', title: '见证成长', desc: '扫码加入，实时看见孩子成长，按需开通会员。' },
 ]
 
 // 套餐（价格以工作台内实际方案为准）

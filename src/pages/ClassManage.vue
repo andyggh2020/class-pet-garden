@@ -797,7 +797,7 @@ onMounted(() => {
                     class="h-24 w-24 shrink-0 rounded-xl border border-white bg-white object-contain"
                   />
                   <div v-else class="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border border-dashed border-[#cfe3d6] text-[#9fbfae]">
-                    <span class="material-symbols-rounded text-[28px]">qr_code_2</span>
+                    <span class="material-symbols-rounded text-[28px]">share</span>
                   </div>
                   <div class="min-w-0">
                     <p class="text-sm font-semibold text-[#166534]">预览效果</p>
