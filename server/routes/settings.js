@@ -278,13 +278,15 @@ router.post('/payment/qrcode', adminMiddleware, async (req, res) => {
     return res.status(400).json({ error: '图片不能超过 2MB' })
   }
 
-  // 保存到 server/public/uploads，通过 /api/uploads 静态访问，避免撑大数据库
+  // 保存到 server/public/uploads，通过静态路由访问，避免撑大数据库
   const uploadsDir = path.resolve(__dirname, '../public/uploads')
   await fs.promises.mkdir(uploadsDir, { recursive: true })
   const filename = `wechat-qrcode-${Date.now()}.${QR_ALLOWED_MIME[mime]}`
   await fs.promises.writeFile(path.join(uploadsDir, filename), buffer)
 
-  res.json({ success: true, qrCodeUrl: `/api/uploads/${filename}` })
+  // 返回与当前请求同前缀的完整 URL（/api 或 /pet-garden/api），确保前端可达
+  const apiBase = req.baseUrl.replace(/\/settings(?:\/.*)?$/, '')
+  res.json({ success: true, qrCodeUrl: `${apiBase}/uploads/${filename}` })
 })
 
 // 上传客服二维码图片（管理员，存为文件避免撑大数据库）
@@ -319,7 +321,9 @@ router.post('/contact/qrcode', adminMiddleware, async (req, res) => {
   const filename = `contact-qrcode-${Date.now()}.${QR_ALLOWED_MIME[mime]}`
   await fs.promises.writeFile(path.join(uploadsDir, filename), buffer)
 
-  res.json({ success: true, qrCodeUrl: `/api/uploads/${filename}` })
+  // 返回与当前请求同前缀的完整 URL（/api 或 /pet-garden/api），确保前端可达
+  const apiBase = req.baseUrl.replace(/\/settings(?:\/.*)?$/, '')
+  res.json({ success: true, qrCodeUrl: `${apiBase}/uploads/${filename}` })
 })
 
 // 修复经验值（将 pet_exp 与 total_points 同步）

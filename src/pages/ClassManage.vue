@@ -6,6 +6,7 @@ import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
 import { getPetType } from '@/data/pets'
+import { normalizeUploadUrl } from '@/utils/uploadUrl'
 import type { AdminClassOverview, AdminMemberDetail, AdminMemberItem, AdminMemberOverview, ClassVipItem, PaymentInfoAdmin } from '@/types'
 
 const router = useRouter()
@@ -281,13 +282,13 @@ async function loadPaymentInfo() {
   try {
     const res = await api.get<PaymentInfoAdmin>('/settings/payment/admin')
     paymentPhone.value = res.data.wechatPhone || ''
-    paymentQrUrl.value = res.data.qrCodeUrl || ''
+    paymentQrUrl.value = normalizeUploadUrl(res.data.qrCodeUrl || '')
     paymentDefaults.value = res.data.defaults || null
     const siteRes = await api.get<{ icp?: string }>('/settings/site')
     siteIcp.value = siteRes.data.icp || ''
     const contactRes = await api.get<{ phone?: string; qrUrl?: string }>('/settings/contact')
     contactPhone.value = contactRes.data.phone || ''
-    contactQrUrl.value = contactRes.data.qrUrl || ''
+    contactQrUrl.value = normalizeUploadUrl(contactRes.data.qrUrl || '')
   } catch (error) {
     console.error('加载收款信息失败:', error)
     toast.error('加载收款信息失败')
@@ -354,7 +355,7 @@ async function savePaymentInfo() {
     toast.warning('请填写管理员微信号')
     return
   }
-  const qrUrl = paymentQrUrl.value.trim()
+  const qrUrl = normalizeUploadUrl(paymentQrUrl.value)
   if (!qrUrl) {
     toast.warning('请填写或上传收款码图片')
     return
@@ -432,7 +433,7 @@ async function saveContactInfo() {
   try {
     const res = await api.put<{ message?: string }>('/settings/contact', {
       phone: contactPhone.value.trim(),
-      qrUrl: contactQrUrl.value.trim(),
+      qrUrl: normalizeUploadUrl(contactQrUrl.value),
     })
     toast.success(res.data.message || '客服信息已保存')
   } catch (error: unknown) {

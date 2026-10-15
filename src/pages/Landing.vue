@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { normalizeUploadUrl } from '@/utils/uploadUrl'
 
 const router = useRouter()
 const { isGuest, username } = useAuth()
@@ -102,7 +103,7 @@ onMounted(async () => {
     if (res.ok) {
       const d = await res.json()
       contactPhone.value = d.phone || ''
-      contactQrUrl.value = d.qrUrl || ''
+      contactQrUrl.value = normalizeUploadUrl(d.qrUrl || '')
     }
   } catch {
     /* 忽略，使用占位 */

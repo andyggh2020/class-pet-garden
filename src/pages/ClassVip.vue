@@ -4,6 +4,7 @@ import AppShell from '@/components/AppShell.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
+import { normalizeUploadUrl } from '@/utils/uploadUrl'
 import type { ClassVipItem, PaymentInfo, VipOverview, VipPlan } from '@/types'
 
 const { api } = useAuth()
@@ -252,7 +253,7 @@ async function loadPaymentInfo() {
     const res = await api.get<PaymentInfo>('/settings/payment')
     paymentInfo.value = {
       wechatPhone: res.data.wechatPhone || FALLBACK_PAYMENT_INFO.wechatPhone,
-      qrCodeUrl: res.data.qrCodeUrl || FALLBACK_PAYMENT_INFO.qrCodeUrl,
+      qrCodeUrl: normalizeUploadUrl(res.data.qrCodeUrl || FALLBACK_PAYMENT_INFO.qrCodeUrl),
     }
   } catch (error) {
     console.error('加载收款信息失败:', error)
