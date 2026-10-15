@@ -149,6 +149,36 @@ router.post('/reset-password', loginRateLimit, async (req, res) => {
   res.json({ success: true, message: '密码已重置，请使用新密码登录' })
 })
 
+// 修改密码（登录态，需验证旧密码）
+router.put('/password', authMiddleware, async (req, res) => {
+  const { oldPassword, newPassword } = req.body || {}
+
+  if (!oldPassword || !newPassword) {
+    return res.status(400).json({ error: '旧密码和新密码不能为空' })
+  }
+  if (newPassword.length < 6) {
+    return res.status(400).json({ error: '新密码至少6位' })
+  }
+  if (oldPassword === newPassword) {
+    return res.status(400).json({ error: '新密码不能与旧密码相同' })
+  }
+
+  const user = await db.prepare('SELECT id, password_hash, is_guest FROM users WHERE id = ?').get(req.userId)
+  if (!user) {
+    return res.status(404).json({ error: '用户不存在' })
+  }
+  if (user.is_guest) {
+    return res.status(400).json({ error: '游客账号请先注册教师账号' })
+  }
+  if (!verifyPassword(oldPassword, user.password_hash)) {
+    return res.status(401).json({ error: '旧密码不正确' })
+  }
+
+  await db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hashPassword(newPassword), user.id)
+
+  res.json({ success: true, message: '密码已修改' })
+})
+
 // 获取当前用户信息（含班级与使用统计）
 router.get('/me', authMiddleware, async (req, res) => {
   const user = await db.prepare('SELECT id, username, is_guest, created_at FROM users WHERE id = ?').get(req.userId)
