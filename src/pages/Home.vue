@@ -761,13 +761,19 @@ async function loadStudents(applySort = false) {
     setCurrentClassStudentCount(null)
     return
   }
-  const res = await api.get(`/classes/${currentClass.value.id}/students`, requestConfigForCurrentClass())
-  students.value = res.data.students
-  setCurrentClassStudentCount(students.value.length)
-  if (applySort || studentDisplayOrder.value.length === 0) {
-    applyStudentSort()
-  } else {
-    syncStudentDisplayOrder()
+  try {
+    const res = await api.get(`/classes/${currentClass.value.id}/students`, requestConfigForCurrentClass())
+    students.value = res.data.students
+    setCurrentClassStudentCount(students.value.length)
+    if (applySort || studentDisplayOrder.value.length === 0) {
+      applyStudentSort()
+    } else {
+      syncStudentDisplayOrder()
+    }
+  } catch (error) {
+    console.error('加载学生失败:', error)
+    students.value = []
+    setCurrentClassStudentCount(null)
   }
 }
 
@@ -1237,13 +1243,20 @@ async function modalQuickAdd(rule: Rule) {
 
 async function loadEvaluationRecords() {
   if (!currentClass.value) return
-  const res = await api.get(
-    `/evaluations?classId=${currentClass.value.id}&today=1&page=1&pageSize=50`,
-    requestConfigForCurrentClass()
-  )
-  evaluationRecords.value = res.data.records || []
-  todayEvaluationCount.value = res.data.total || 0
-  totalRecords.value = res.data.total || 0
+  try {
+    const res = await api.get(
+      `/evaluations?classId=${currentClass.value.id}&today=1&page=1&pageSize=50`,
+      requestConfigForCurrentClass()
+    )
+    evaluationRecords.value = res.data.records || []
+    todayEvaluationCount.value = res.data.total || 0
+    totalRecords.value = res.data.total || 0
+  } catch (error) {
+    console.error('加载评价记录失败:', error)
+    evaluationRecords.value = []
+    todayEvaluationCount.value = 0
+    totalRecords.value = 0
+  }
 }
 
 async function loadWeeklyChartRecords() {
