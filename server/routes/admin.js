@@ -10,6 +10,43 @@ const router = Router()
 
 router.use(adminMiddleware)
 
+// 数据备份：导出全站数据（所有业务表）为 JSON 供管理员下载
+const BACKUP_TABLES = [
+  'users',
+  'classes',
+  'students',
+  'badges',
+  'evaluation_rules',
+  'evaluation_records',
+  'settings',
+  'class_tasks',
+  'task_completions',
+  'class_vip_subscriptions',
+]
+
+router.get('/backup', async (req, res, next) => {
+  try {
+    const tables = {}
+    for (const table of BACKUP_TABLES) {
+      // 表名均为白名单常量，非用户输入，安全
+      tables[table] = await db.prepare(`SELECT * FROM ${table}`).all()
+    }
+    const payload = {
+      app: 'class-pet-garden',
+      version: 1,
+      exportedAt: Date.now(),
+      tables,
+    }
+    const body = JSON.stringify(payload)
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')
+    res.setHeader('Content-Type', 'application/json; charset=utf-8')
+    res.setHeader('Content-Disposition', `attachment; filename="class-pet-garden-backup-${stamp}.json"`)
+    res.send(body)
+  } catch (error) {
+    next(error)
+  }
+})
+
 async function getClassById(classId) {
   return await db.prepare(`
     SELECT c.id, c.name, c.user_id, u.username AS owner_username, u.is_guest AS owner_is_guest

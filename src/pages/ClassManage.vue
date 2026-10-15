@@ -342,6 +342,26 @@ async function saveContactInfo() {
   }
 }
 
+async function exportBackup() {
+  try {
+    const res = await api.get('/admin/backup', { responseType: 'blob' })
+    const blob = new Blob([res.data], { type: 'application/json' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[-:T]/g, '')
+    link.setAttribute('download', `class-pet-garden-backup-${stamp}.json`)
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+    window.URL.revokeObjectURL(url)
+    toast.success('数据备份已导出')
+  } catch (error) {
+    console.error('导出备份失败:', error)
+    toast.error('数据备份导出失败')
+  }
+}
+
 function switchTab(tab: AdminTab) {
   activeTab.value = tab
   if (tab === 'members') {
@@ -553,15 +573,25 @@ onMounted(() => {
                 管理全站注册教师账户，以及全部班级与 VIP 授权状态。
               </p>
             </div>
-            <router-link
-              to="/guide"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex h-10 shrink-0 items-center gap-1.5 self-start rounded-xl border border-[#f0e5da] bg-white px-4 text-sm font-semibold text-[#765f50] transition hover:bg-[#fff7f1] sm:self-auto"
-            >
-              <span class="material-symbols-rounded text-[18px] leading-none">menu_book</span>
-              操作说明
-            </router-link>
+            <div class="flex shrink-0 items-center gap-2 self-start sm:self-auto">
+              <router-link
+                to="/guide"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#f0e5da] bg-white px-4 text-sm font-semibold text-[#765f50] transition hover:bg-[#fff7f1]"
+              >
+                <span class="material-symbols-rounded text-[18px] leading-none">menu_book</span>
+                操作说明
+              </router-link>
+              <button
+                type="button"
+                class="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#f0e5da] bg-white px-4 text-sm font-semibold text-[#765f50] transition hover:bg-[#fff7f1]"
+                @click="exportBackup"
+              >
+                <span class="material-symbols-rounded text-[18px] leading-none">save</span>
+                数据备份
+              </button>
+            </div>
           </div>
 
           <div class="mt-7 flex flex-wrap gap-3">
