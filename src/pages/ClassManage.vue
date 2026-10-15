@@ -23,6 +23,10 @@ const paymentDefaults = ref<PaymentInfoAdmin['defaults'] | null>(null)
 const qrFileName = ref('')
 const qrInputRef = ref<HTMLInputElement | null>(null)
 
+// 站点信息（备案号，展示在销售页页脚）
+const siteIcp = ref('')
+const siteSaving = ref(false)
+
 const qrPreviewSrc = computed(() => paymentQrUrl.value.trim())
 
 const activeTab = ref<AdminTab>('classes')
@@ -163,6 +167,8 @@ async function loadPaymentInfo() {
     paymentPhone.value = res.data.wechatPhone || ''
     paymentQrUrl.value = res.data.qrCodeUrl || ''
     paymentDefaults.value = res.data.defaults || null
+    const siteRes = await api.get<{ icp?: string }>('/settings/site')
+    siteIcp.value = siteRes.data.icp || ''
   } catch (error) {
     console.error('加载收款信息失败:', error)
     toast.error('加载收款信息失败')
@@ -249,6 +255,22 @@ async function savePaymentInfo() {
     toast.error(message || '保存收款信息失败')
   } finally {
     paymentSaving.value = false
+  }
+}
+
+async function saveSiteInfo() {
+  siteSaving.value = true
+  try {
+    const res = await api.put<{ message?: string }>('/settings/site', {
+      icp: siteIcp.value.trim(),
+    })
+    toast.success(res.data.message || '站点信息已保存')
+  } catch (error: unknown) {
+    console.error('保存站点信息失败:', error)
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    toast.error(message || '保存站点信息失败')
+  } finally {
+    siteSaving.value = false
   }
 }
 
@@ -814,6 +836,27 @@ onMounted(() => {
               >
                 <span class="material-symbols-rounded text-[18px] leading-none">save</span>
                 {{ paymentSaving ? '保存中…' : '保存收款信息' }}
+              </button>
+            </div>
+
+            <div class="rounded-2xl border border-[#f3ece4] bg-[#fffdfb] p-5">
+              <span class="text-sm font-bold text-[#4d3527]">ICP 备案号</span>
+              <p class="mt-1 text-xs text-[#a1836d]">展示在销售页页脚「© 版权信息」下方，留空则显示占位文本。</p>
+              <input
+                v-model="siteIcp"
+                type="text"
+                maxlength="64"
+                class="mt-3 w-full rounded-xl border border-[#ecdfd4] bg-white px-4 py-3 text-sm text-[#422d20] outline-none focus:border-orange-300"
+                placeholder="例如：京ICP备2026000000号-1"
+              />
+              <button
+                type="button"
+                class="mt-5 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-[#4d3527] px-4 text-sm font-semibold text-white transition hover:bg-[#3a281d] disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="siteSaving"
+                @click="saveSiteInfo"
+              >
+                <span class="material-symbols-rounded text-[18px] leading-none">save</span>
+                {{ siteSaving ? '保存中…' : '保存备案号' }}
               </button>
             </div>
 

@@ -160,6 +160,46 @@ router.put('/payment', adminMiddleware, async (req, res) => {
   })
 })
 
+// 站点信息（备案号等）
+async function readSiteInfo() {
+  const row = await db.prepare("SELECT value FROM settings WHERE `key` = 'siteInfo'").get()
+  let stored = {}
+  if (row?.value) {
+    try {
+      const parsed = JSON.parse(row.value)
+      if (parsed && typeof parsed === 'object') stored = parsed
+    } catch {
+      stored = {}
+    }
+  }
+  return {
+    icp: typeof stored.icp === 'string' ? stored.icp.trim() : '',
+  }
+}
+
+// 获取站点信息（公开接口，供销售页页脚展示备案号）
+router.get('/site', async (req, res) => {
+  res.json(await readSiteInfo())
+})
+
+// 保存站点信息（管理员）
+router.put('/site', adminMiddleware, async (req, res) => {
+  const icp = String(req.body?.icp ?? '').trim()
+  if (icp.length > 64) {
+    return res.status(400).json({ error: '备案号过长' })
+  }
+
+  const payload = JSON.stringify({ icp })
+  const existing = await db.prepare("SELECT `key` FROM settings WHERE `key` = 'siteInfo'").get()
+  if (existing) {
+    await db.prepare("UPDATE settings SET value = ? WHERE `key` = 'siteInfo'").run(payload)
+  } else {
+    await db.prepare("INSERT INTO settings (`key`, value) VALUES ('siteInfo', ?)").run(payload)
+  }
+
+  res.json({ success: true, message: '站点信息已保存', ...(await readSiteInfo()) })
+})
+
 // 上传收款码图片（管理员，存为 data URL 直接入库）
 router.post('/payment/qrcode', adminMiddleware, async (req, res) => {
   const { dataUrl } = req.body || {}

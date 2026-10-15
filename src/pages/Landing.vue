@@ -6,8 +6,8 @@ const router = useRouter()
 
 // ===== 可配置信息（上线前替换为真实内容） =====
 const brandName = '班级宠物园'
-// 备案号占位：替换为你的 ICP 备案号，例如 京ICP备XXXXXXXX号-1
-const beianNo = '京ICP备XXXXXXXX号-X'
+// 备案号：默认占位，管理员在后台「收款设置 → ICP 备案号」填写后自动同步
+const beianNo = ref('京ICP备XXXXXXXX号-X')
 const serviceTime = '每日 9:00 - 21:00'
 // 第三方统计代码（百度统计/微信统计/友盟等）。留空则不注入。
 // 例如百度统计：
@@ -78,6 +78,16 @@ onMounted(async () => {
       const d = await res.json()
       wechatPhone.value = d.wechatPhone || ''
       qrCodeUrl.value = d.qrCodeUrl || ''
+    }
+  } catch {
+    /* 忽略，使用占位 */
+  }
+  // 同步后台站点信息（ICP 备案号）
+  try {
+    const res = await fetch('/api/settings/site')
+    if (res.ok) {
+      const d = await res.json()
+      if (d.icp) beianNo.value = d.icp
     }
   } catch {
     /* 忽略，使用占位 */
