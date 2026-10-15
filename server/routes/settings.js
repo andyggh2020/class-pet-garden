@@ -200,6 +200,57 @@ router.put('/site', adminMiddleware, async (req, res) => {
   res.json({ success: true, message: '站点信息已保存', ...(await readSiteInfo()) })
 })
 
+// 客服信息（客服电话 + 客服二维码）
+async function readContactInfo() {
+  const row = await db.prepare("SELECT value FROM settings WHERE `key` = 'contactInfo'").get()
+  let stored = {}
+  if (row?.value) {
+    try {
+      const parsed = JSON.parse(row.value)
+      if (parsed && typeof parsed === 'object') stored = parsed
+    } catch {
+      stored = {}
+    }
+  }
+  return {
+    phone: typeof stored.phone === 'string' ? stored.phone.trim() : '',
+    qrUrl: typeof stored.qrUrl === 'string' ? stored.qrUrl.trim() : '',
+  }
+}
+
+// 获取客服信息（公开接口，供销售页联系客服区块展示）
+router.get('/contact', async (req, res) => {
+  res.json(await readContactInfo())
+})
+
+// 保存客服信息（管理员）
+router.put('/contact', adminMiddleware, async (req, res) => {
+  const phone = String(req.body?.phone ?? '').trim()
+  if (phone.length > 64) {
+    return res.status(400).json({ error: '客服电话过长' })
+  }
+
+  const rawQr = String(req.body?.qrUrl ?? '').trim()
+  let qrUrl = ''
+  if (rawQr) {
+    const normalized = normalizeQrCodeUrl(rawQr)
+    if (normalized.error) {
+      return res.status(400).json({ error: normalized.error })
+    }
+    qrUrl = normalized.url
+  }
+
+  const payload = JSON.stringify({ phone, qrUrl })
+  const existing = await db.prepare("SELECT `key` FROM settings WHERE `key` = 'contactInfo'").get()
+  if (existing) {
+    await db.prepare("UPDATE settings SET value = ? WHERE `key` = 'contactInfo'").run(payload)
+  } else {
+    await db.prepare("INSERT INTO settings (`key`, value) VALUES ('contactInfo', ?)").run(payload)
+  }
+
+  res.json({ success: true, message: '客服信息已保存', ...(await readContactInfo()) })
+})
+
 // 上传收款码图片（管理员，存为 data URL 直接入库）
 router.post('/payment/qrcode', adminMiddleware, async (req, res) => {
   const { dataUrl } = req.body || {}
@@ -231,6 +282,41 @@ router.post('/payment/qrcode', adminMiddleware, async (req, res) => {
   const uploadsDir = path.resolve(__dirname, '../public/uploads')
   await fs.promises.mkdir(uploadsDir, { recursive: true })
   const filename = `wechat-qrcode-${Date.now()}.${QR_ALLOWED_MIME[mime]}`
+  await fs.promises.writeFile(path.join(uploadsDir, filename), buffer)
+
+  res.json({ success: true, qrCodeUrl: `/api/uploads/${filename}` })
+})
+
+// 上传客服二维码图片（管理员，存为文件避免撑大数据库）
+router.post('/contact/qrcode', adminMiddleware, async (req, res) => {
+  const { dataUrl } = req.body || {}
+  const value = String(dataUrl ?? '')
+  const match = /^data:([\w.+-]+\/[\w.+-]+);base64,(.+)$/i.exec(value)
+  if (!match) {
+    return res.status(400).json({ error: '图片格式不正确，请上传 PNG/JPG/WEBP/GIF' })
+  }
+
+  const mime = match[1].toLowerCase()
+  if (!QR_ALLOWED_MIME[mime]) {
+    return res.status(400).json({ error: '仅支持 PNG、JPG、WEBP、GIF 格式的图片' })
+  }
+
+  let buffer
+  try {
+    buffer = Buffer.from(match[2], 'base64')
+  } catch {
+    return res.status(400).json({ error: '图片数据解析失败' })
+  }
+  if (!buffer.length) {
+    return res.status(400).json({ error: '图片内容为空' })
+  }
+  if (buffer.length > QR_MAX_BYTES) {
+    return res.status(400).json({ error: '图片不能超过 2MB' })
+  }
+
+  const uploadsDir = path.resolve(__dirname, '../public/uploads')
+  await fs.promises.mkdir(uploadsDir, { recursive: true })
+  const filename = `contact-qrcode-${Date.now()}.${QR_ALLOWED_MIME[mime]}`
   await fs.promises.writeFile(path.join(uploadsDir, filename), buffer)
 
   res.json({ success: true, qrCodeUrl: `/api/uploads/${filename}` })

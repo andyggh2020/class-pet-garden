@@ -14,9 +14,9 @@ const serviceTime = '每日 9:00 - 21:00'
 //   "var _hmt=_hmt||[];(function(){var hm=document.createElement('script');hm.src='https://hm.baidu.com/hm.js?你的ID';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(hm,s);})();"
 const analyticsScript: string = ''
 
-// 客服信息：默认占位，运行时从后台"收款设置"自动同步
-const wechatPhone = ref('')
-const qrCodeUrl = ref('')
+// 客服信息：默认占位，运行时从后台"系统设置 → 客服信息"自动同步
+const contactPhone = ref('')
+const contactQrUrl = ref('')
 const fallbackPhone = '136-0000-0000'
 
 // Hero 主标题：每次进入随机抽一条（与原首页保持一致）
@@ -71,13 +71,13 @@ onMounted(async () => {
     s.textContent = analyticsScript
     document.head.appendChild(s)
   }
-  // 同步后台客服信息（收款设置里的微信/电话）
+  // 同步后台客服信息（系统设置里的客服电话与客服二维码）
   try {
-    const res = await fetch('/api/settings/payment')
+    const res = await fetch('/api/settings/contact')
     if (res.ok) {
       const d = await res.json()
-      wechatPhone.value = d.wechatPhone || ''
-      qrCodeUrl.value = d.qrCodeUrl || ''
+      contactPhone.value = d.phone || ''
+      contactQrUrl.value = d.qrUrl || ''
     }
   } catch {
     /* 忽略，使用占位 */
@@ -246,7 +246,7 @@ onMounted(async () => {
             <h2 class="font-serif text-3xl font-bold">有任何问题，随时找我们</h2>
             <p class="mt-3 opacity-90">专属客服协助你创建班级、配置方案，让落地零阻力。</p>
             <div class="mt-6 space-y-3 text-sm">
-              <p class="flex items-center gap-2"><span class="material-symbols-rounded">call</span> 客服电话：{{ wechatPhone || fallbackPhone }}</p>
+              <p class="flex items-center gap-2"><span class="material-symbols-rounded">call</span> 客服电话：{{ contactPhone || fallbackPhone }}</p>
               <p class="flex items-center gap-2"><span class="material-symbols-rounded">refresh</span> 服务时间：{{ serviceTime }}</p>
             </div>
             <button type="button" class="mt-6 inline-flex h-12 items-center gap-2 rounded-full bg-white px-7 text-base font-bold text-[#ff5c00] transition hover:bg-[#fff3eb]" @click="goWorkbench">
@@ -256,10 +256,10 @@ onMounted(async () => {
           </div>
           <div class="flex flex-col items-center justify-center">
             <div class="flex h-44 w-44 items-center justify-center rounded-3xl bg-white/95 shadow-inner">
-              <img v-if="qrCodeUrl" :src="qrCodeUrl" alt="客服二维码" class="h-40 w-40 rounded-2xl object-contain" />
+              <img v-if="contactQrUrl" :src="contactQrUrl" alt="客服二维码" class="h-40 w-40 rounded-2xl object-contain" />
               <span v-else class="material-symbols-rounded text-[64px] text-[#ffb380]">share</span>
             </div>
-            <p class="mt-3 text-sm opacity-90">扫码添加客服 / 查看收款</p>
+            <p class="mt-3 text-sm opacity-90">扫码添加客服</p>
           </div>
         </div>
       </div>

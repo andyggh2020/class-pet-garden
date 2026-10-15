@@ -28,6 +28,13 @@ const qrInputRef = ref<HTMLInputElement | null>(null)
 const siteIcp = ref('')
 const siteSaving = ref(false)
 
+// 客服信息（客服电话 + 客服二维码，展示在销售页联系客服区块）
+const contactPhone = ref('')
+const contactQrUrl = ref('')
+const contactSaving = ref(false)
+const contactUploading = ref(false)
+const contactQrInputRef = ref<HTMLInputElement | null>(null)
+
 // 会员数据详情（班级 + 学生）
 const showMemberDetail = ref(false)
 const memberDetailLoading = ref(false)
@@ -176,6 +183,9 @@ async function loadPaymentInfo() {
     paymentDefaults.value = res.data.defaults || null
     const siteRes = await api.get<{ icp?: string }>('/settings/site')
     siteIcp.value = siteRes.data.icp || ''
+    const contactRes = await api.get<{ phone?: string; qrUrl?: string }>('/settings/contact')
+    contactPhone.value = contactRes.data.phone || ''
+    contactQrUrl.value = contactRes.data.qrUrl || ''
   } catch (error) {
     console.error('加载收款信息失败:', error)
     toast.error('加载收款信息失败')
@@ -278,6 +288,57 @@ async function saveSiteInfo() {
     toast.error(message || '保存站点信息失败')
   } finally {
     siteSaving.value = false
+  }
+}
+
+function pickContactQrFile() {
+  contactQrInputRef.value?.click()
+}
+
+async function handleContactQrFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  input.value = ''
+  if (!file) return
+
+  if (!file.type.startsWith('image/')) {
+    toast.warning('请选择图片文件')
+    return
+  }
+  if (file.size > 2 * 1024 * 1024) {
+    toast.warning('图片不能超过 2MB')
+    return
+  }
+
+  contactUploading.value = true
+  try {
+    const dataUrl = await readFileAsDataUrl(file)
+    const res = await api.post<{ qrCodeUrl: string }>('/settings/contact/qrcode', { dataUrl })
+    contactQrUrl.value = res.data.qrCodeUrl
+    toast.success('客服二维码已上传，记得点击保存')
+  } catch (error: unknown) {
+    console.error('上传客服二维码失败:', error)
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    toast.error(message || '上传客服二维码失败')
+  } finally {
+    contactUploading.value = false
+  }
+}
+
+async function saveContactInfo() {
+  contactSaving.value = true
+  try {
+    const res = await api.put<{ message?: string }>('/settings/contact', {
+      phone: contactPhone.value.trim(),
+      qrUrl: contactQrUrl.value.trim(),
+    })
+    toast.success(res.data.message || '客服信息已保存')
+  } catch (error: unknown) {
+    console.error('保存客服信息失败:', error)
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    toast.error(message || '保存客服信息失败')
+  } finally {
+    contactSaving.value = false
   }
 }
 
@@ -902,6 +963,78 @@ onMounted(() => {
               >
                 <span class="material-symbols-rounded text-[18px] leading-none">save</span>
                 {{ siteSaving ? '保存中…' : '保存备案号' }}
+              </button>
+            </div>
+
+            <div class="rounded-2xl border border-[#f3ece4] bg-[#fffdfb] p-5">
+              <span class="text-sm font-bold text-[#4d3527]">客服信息</span>
+              <p class="mt-1 text-xs text-[#a1836d]">展示在销售页「联系客服」区块，供家长与教师联系你。</p>
+
+              <label class="block mt-3">
+                <span class="text-sm font-bold text-[#4d3527]">客服电话</span>
+                <input
+                  v-model="contactPhone"
+                  type="text"
+                  maxlength="64"
+                  class="mt-2 w-full rounded-xl border border-[#ecdfd4] bg-white px-4 py-3 text-sm text-[#422d20] outline-none focus:border-orange-300"
+                  placeholder="例如：400-123-4567 或 13800138000"
+                />
+              </label>
+
+              <div class="mt-4">
+                <span class="text-sm font-bold text-[#4d3527]">客服二维码</span>
+                <p class="mt-1 text-xs text-[#a1836d]">可上传本地图片（PNG/JPG/WEBP/GIF，≤2MB），或直接填写图片地址。</p>
+
+                <div class="mt-3 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    class="inline-flex h-10 items-center gap-1.5 rounded-xl bg-[#ea580c] px-4 text-sm font-semibold text-white transition hover:bg-[#c2410c] disabled:cursor-not-allowed disabled:opacity-50"
+                    :disabled="contactUploading || contactSaving"
+                    @click="pickContactQrFile"
+                  >
+                    <span class="material-symbols-rounded text-[18px] leading-none">upload</span>
+                    {{ contactUploading ? '上传中…' : '上传二维码' }}
+                  </button>
+                  <input
+                    ref="contactQrInputRef"
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    class="hidden"
+                    @change="handleContactQrFileChange"
+                  />
+                </div>
+                <input
+                  v-model="contactQrUrl"
+                  type="text"
+                  class="mt-3 w-full rounded-xl border border-[#ecdfd4] bg-white px-4 py-3 font-mono text-xs text-[#422d20] outline-none focus:border-orange-300"
+                  placeholder="/api/uploads/xxx.png 或 https://..."
+                />
+
+                <div class="mt-4 flex items-center gap-3 rounded-2xl border border-[#e8f5e9] bg-[#f6fff8] p-3">
+                  <img
+                    v-if="contactQrUrl"
+                    :src="contactQrUrl"
+                    alt="客服二维码预览"
+                    class="h-24 w-24 shrink-0 rounded-xl border border-white bg-white object-contain"
+                  />
+                  <div v-else class="flex h-24 w-24 shrink-0 items-center justify-center rounded-xl border border-dashed border-[#cfe3d6] text-[#9fbfae]">
+                    <span class="material-symbols-rounded text-[28px]">share</span>
+                  </div>
+                  <div class="min-w-0">
+                    <p class="text-sm font-semibold text-[#166534]">预览效果</p>
+                    <p class="mt-1 break-all text-xs leading-5 text-[#6b8f7d]">建议使用正方形图片，展示尺寸约 160px。</p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="mt-5 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-[#4d3527] px-4 text-sm font-semibold text-white transition hover:bg-[#3a281d] disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="contactSaving"
+                @click="saveContactInfo"
+              >
+                <span class="material-symbols-rounded text-[18px] leading-none">save</span>
+                {{ contactSaving ? '保存中…' : '保存客服信息' }}
               </button>
             </div>
 
