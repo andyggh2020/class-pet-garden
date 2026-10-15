@@ -104,7 +104,8 @@ function registerFrontendRoutes() {
 // Middleware
 app.set('trust proxy', 1)
 app.use(cors())
-app.use(express.json())
+// 后台上传的图片以 base64 data URL 提交（2MB 图 ≈ 2.7MB），放宽 JSON 体积上限
+app.use(express.json({ limit: '6mb' }))
 
 const ADMIN_USERNAME = 'admin'
 const ADMIN_DEFAULT_PASSWORD = process.env.ADMIN_DEFAULT_PASSWORD || 'admin!@#$'
