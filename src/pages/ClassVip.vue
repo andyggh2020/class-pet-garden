@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import AppShell from '@/components/AppShell.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
@@ -52,7 +52,7 @@ const subscribeConfirmMessage = computed(() => {
   if (!pendingClass.value) return ''
   const plan = plans.value.find(item => item.id === selectedPlan.value)
   const action = pendingClass.value.vip?.isActive ? '续费' : '开通'
-  return `确认为「${pendingClass.value.name}」${action}「${plan?.label || ''}」？应付金额 ¥${plan?.price || 0}/${plan?.unit || ''}。确认后将展示微信收款码，请完成支付后联系管理员开通。`
+  return `确认为「${pendingClass.value.name}」${action}「${plan?.label || ''}」？应付金额 ¥${plan?.price || 0}/${plan?.unit || ''}。确认后将生成订单并展示微信收款码，支付完成后管理员确认到账即自动开通。`
 })
 
 const pendingOrder = computed(() => {
@@ -144,16 +144,99 @@ function cancelSubscribe() {
   pendingClass.value = null
 }
 
-function confirmSubscribe() {
+// ===== 订单：确认方案后创建订单，支付弹窗轮询等待管理员确认 =====
+const orderNo = ref('')
+const creatingOrder = ref(false)
+let orderTimer: number | undefined
+
+async function confirmSubscribe() {
   if (!pendingClass.value) return
-  showSubscribeConfirm.value = false
-  showPaymentModal.value = true
+  creatingOrder.value = true
+  try {
+    const res = await api.post<{ order?: { order_no?: string }; error?: string }>('/orders', {
+      classId: pendingClass.value.id,
+      plan: selectedPlan.value,
+    })
+    const no = res.data.order?.order_no
+    if (!no) {
+      toast.error(res.data.error || '创建订单失败')
+      return
+    }
+    orderNo.value = no
+    showSubscribeConfirm.value = false
+    showPaymentModal.value = true
+    startOrderPolling()
+  } catch (error: unknown) {
+    console.error('创建订单失败:', error)
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    toast.error(message || '创建订单失败，请稍后再试')
+  } finally {
+    creatingOrder.value = false
+  }
+}
+
+async function pollOrder() {
+  if (!orderNo.value) return
+  try {
+    const res = await api.get<{ order?: { status?: string } }>(`/orders/${orderNo.value}`)
+    const status = res.data.order?.status
+    if (status === 'confirmed') {
+      stopOrderPolling()
+      showPaymentModal.value = false
+      pendingClass.value = null
+      orderNo.value = ''
+      toast.success('管理员已确认到账，会员已开通！')
+      await loadOverview()
+    } else if (status === 'cancelled') {
+      stopOrderPolling()
+      showPaymentModal.value = false
+      pendingClass.value = null
+      orderNo.value = ''
+      toast.info('订单已取消')
+    }
+  } catch {
+    /* 单次轮询失败忽略，下一轮继续 */
+  }
+}
+
+function startOrderPolling() {
+  stopOrderPolling()
+  void pollOrder()
+  orderTimer = window.setInterval(pollOrder, 5000)
+}
+
+function stopOrderPolling() {
+  if (orderTimer) {
+    window.clearInterval(orderTimer)
+    orderTimer = undefined
+  }
+}
+
+async function cancelOrder() {
+  if (!orderNo.value) return
+  try {
+    await api.post(`/orders/${orderNo.value}/cancel`)
+    toast.info('订单已取消')
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    toast.error(message || '取消订单失败')
+    return
+  }
+  stopOrderPolling()
+  showPaymentModal.value = false
+  pendingClass.value = null
+  orderNo.value = ''
 }
 
 function closePaymentModal() {
+  stopOrderPolling()
   showPaymentModal.value = false
   pendingClass.value = null
 }
+
+onUnmounted(() => {
+  stopOrderPolling()
+})
 
 async function copyAdminWechat() {
   try {
@@ -401,6 +484,10 @@ onMounted(() => {
                 <p class="text-sm font-bold tracking-[0.16em] text-[#16a34a]">WECHAT PAY</p>
                 <h3 class="mt-1 font-serif text-2xl font-bold text-[#422d20]">微信扫码支付</h3>
                 <p class="mt-2 text-sm leading-6 text-[#806b5b]">请使用微信扫描下方收款码，完成对应方案的费用支付。</p>
+                <div class="mt-3 inline-flex items-center gap-2 rounded-full bg-[#fff7ed] px-3 py-1.5 text-sm font-semibold text-[#c2410c]">
+                  <span class="material-symbols-rounded text-[16px] leading-none">refresh</span>
+                  订单待确认
+                </div>
               </div>
               <button
                 type="button"
@@ -417,6 +504,10 @@ onMounted(() => {
             <div class="rounded-2xl border border-[#f0e5da] bg-[#fffaf5] p-4">
               <p class="text-sm font-semibold text-[#9a735d]">订单信息</p>
               <div class="mt-3 space-y-2 text-sm text-[#5c463a]">
+                <div class="flex items-center justify-between gap-3">
+                  <span>订单号</span>
+                  <span class="font-mono text-sm font-semibold text-[#422d20]">{{ orderNo || '生成中…' }}</span>
+                </div>
                 <div class="flex items-center justify-between gap-3">
                   <span>班级</span>
                   <span class="font-semibold text-[#422d20]">{{ pendingOrder.className }}</span>
@@ -443,8 +534,12 @@ onMounted(() => {
             </div>
 
             <div class="mt-5 space-y-3 text-sm leading-7 text-[#806b5b]">
+              <div class="rounded-2xl border border-[#e8f5e9] bg-[#f6fff8] px-4 py-3 text-[#166534]">
+                <p class="font-semibold">支付完成后，管理员确认到账即自动开通</p>
+                <p class="mt-1 text-[#6b8f7d]">本页面会自动检测开通结果，无需反复询问；你也可以稍后在「灵犀计划」页查看状态。</p>
+              </div>
               <div class="rounded-2xl border border-[#ffedd5] bg-[#fff7ed] px-4 py-3 text-[#9a5a2b]">
-                <p class="font-semibold text-[#c2410c]">支付完成后，请联系管理员开通</p>
+                <p class="font-semibold text-[#c2410c]">如支付遇到问题，请联系管理员</p>
                 <p class="mt-1">
                   请添加微信
                   <button
@@ -455,13 +550,20 @@ onMounted(() => {
                     {{ ADMIN_WECHAT_PHONE }}
                     <span class="material-symbols-rounded text-[16px]">content_copy</span>
                   </button>
-                  ，并注明<strong class="font-semibold text-[#422d20]">班级名称</strong>与<strong class="font-semibold text-[#422d20]">所选方案</strong>。我们将在核实到账后，为您手动开通灵犀计划。
+                  ，并注明<strong class="font-semibold text-[#422d20]">订单号</strong>。我们将在核实到账后尽快开通。
                 </p>
               </div>
             </div>
           </div>
 
           <div class="flex justify-end gap-2 border-t border-[#f0e5da] px-6 py-4">
+            <button
+              type="button"
+              class="mr-auto rounded-xl px-4 py-2.5 text-sm font-medium text-rose-500 transition hover:bg-rose-50"
+              @click="cancelOrder"
+            >
+              取消订单
+            </button>
             <button
               type="button"
               class="rounded-xl px-4 py-2.5 text-sm font-medium text-[#9a735d] transition hover:bg-[#fff7f1]"

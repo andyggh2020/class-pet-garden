@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
@@ -7,7 +7,7 @@ import { CURRENT_CLASS_CHANGED_EVENT, useClassVip } from '@/composables/useClass
 import { useStudentImport, STUDENTS_IMPORTED_EVENT } from '@/composables/useStudentImport'
 
 const route = useRoute()
-const { isAdmin } = useAuth()
+const { isAdmin, api, isGuest } = useAuth()
 const { currentClassVipActive, refreshClassVipStatus } = useClassVip()
 
 withDefaults(defineProps<{
@@ -70,16 +70,79 @@ onMounted(() => {
   void refreshClassVipStatus()
   window.addEventListener(STUDENTS_IMPORTED_EVENT, handleStudentsImported)
   window.addEventListener(CURRENT_CLASS_CHANGED_EVENT, handleCurrentClassChanged)
+  void loadNotifications()
+  // 每 60 秒轮询一次未读通知
+  notificationTimer = window.setInterval(loadNotifications, 60000)
 })
 
 onUnmounted(() => {
   window.removeEventListener(STUDENTS_IMPORTED_EVENT, handleStudentsImported)
   window.removeEventListener(CURRENT_CLASS_CHANGED_EVENT, handleCurrentClassChanged)
+  if (notificationTimer) {
+    window.clearInterval(notificationTimer)
+    notificationTimer = undefined
+  }
 })
 
 watch(() => route.path, () => {
   void refreshClassVipStatus()
 })
+
+// ===== 站内通知 =====
+interface AppNotification {
+  id: string
+  type: string
+  title: string
+  content: string
+  isRead: boolean
+  createdAt: number
+}
+
+const notifications = ref<AppNotification[]>([])
+const unreadCount = ref(0)
+const showNotifications = ref(false)
+let notificationTimer: number | undefined
+
+async function loadNotifications() {
+  if (isGuest.value) return
+  try {
+    const res = await api.get<{ notifications?: AppNotification[]; unreadCount?: number }>('/auth/notifications')
+    notifications.value = res.data.notifications || []
+    unreadCount.value = res.data.unreadCount || 0
+  } catch {
+    /* 忽略，不影响主流程 */
+  }
+}
+
+async function markNotificationRead(item: AppNotification) {
+  if (item.isRead) return
+  try {
+    await api.put(`/auth/notifications/${item.id}/read`)
+    item.isRead = true
+    unreadCount.value = Math.max(0, unreadCount.value - 1)
+  } catch {
+    /* 忽略 */
+  }
+}
+
+async function markAllNotificationsRead() {
+  try {
+    await api.put('/auth/notifications/read-all')
+    for (const item of notifications.value) item.isRead = true
+    unreadCount.value = 0
+  } catch {
+    /* 忽略 */
+  }
+}
+
+function formatNotificationTime(timestamp: number) {
+  const d = new Date(timestamp)
+  const now = new Date()
+  const isToday = d.toDateString() === now.toDateString()
+  return isToday
+    ? `今天 ${d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`
+    : d.toLocaleDateString('zh-CN', { month: 'numeric', day: 'numeric' })
+}
 </script>
 
 <template>
@@ -116,6 +179,54 @@ watch(() => route.path, () => {
           <router-link v-if="isAdmin" to="/admin" class="flex min-h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition" :class="activePage === 'admin-home' ? 'bg-[#fff0e2] text-[#b85e25] shadow-[inset_0_0_0_1px_rgba(234,151,86,0.18)]' : 'text-[#765f50] hover:bg-[#fff7f1] hover:text-[#b85e25]'"><span class="material-symbols-rounded text-[20px] leading-none">dashboard</span>管理工作台</router-link>
           <router-link v-if="isAdmin" to="/manage" class="flex min-h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition" :class="activePage === 'manage' ? 'bg-[#fff0e2] text-[#b85e25] shadow-[inset_0_0_0_1px_rgba(234,151,86,0.18)]' : 'text-[#765f50] hover:bg-[#fff7f1] hover:text-[#b85e25]'"><span class="material-symbols-rounded text-[20px] leading-none">manage_accounts</span>系统管理</router-link>
         </nav>
+
+        <!-- 通知铃铛 -->
+        <div v-if="!isGuest" class="relative mt-4">
+          <button
+            type="button"
+            class="flex min-h-11 w-full items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition"
+            :class="showNotifications ? 'bg-[#fff0e2] text-[#b85e25]' : 'text-[#765f50] hover:bg-[#fff7f1] hover:text-[#b85e25]'"
+            @click="showNotifications = !showNotifications"
+          >
+            <span class="relative">
+              <span class="material-symbols-rounded text-[20px] leading-none">stars</span>
+              <span v-if="unreadCount > 0" class="absolute -right-1.5 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">{{ unreadCount > 99 ? '99+' : unreadCount }}</span>
+            </span>
+            通知中心
+          </button>
+
+          <div
+            v-if="showNotifications"
+            class="absolute bottom-0 left-full z-50 ml-2 w-80 overflow-hidden rounded-2xl border border-[#f1e5db] bg-white shadow-[0_12px_36px_rgba(116,76,45,0.16)]"
+          >
+            <div class="flex items-center justify-between border-b border-[#f3ece4] px-4 py-3">
+              <p class="text-sm font-bold text-[#422d20]">通知中心</p>
+              <button type="button" class="text-xs font-semibold text-[#d97706] hover:underline" @click="markAllNotificationsRead">全部已读</button>
+            </div>
+            <div class="max-h-80 overflow-y-auto">
+              <button
+                v-for="item in notifications"
+                :key="item.id"
+                type="button"
+                class="flex w-full gap-3 border-b border-[#faf6f1] px-4 py-3 text-left transition last:border-0 hover:bg-[#fffdfb]"
+                @click="markNotificationRead(item)"
+              >
+                <span class="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full" :class="item.type === 'vip' ? 'bg-[#fff7ed] text-[#f59e0b]' : 'bg-[#fff3eb] text-[#d97706]'">
+                  <span class="material-symbols-rounded text-[16px]">{{ item.type === 'vip' ? 'workspace_premium' : 'verified' }}</span>
+                </span>
+                <span class="min-w-0 flex-1">
+                  <span class="flex items-center gap-2">
+                    <span class="truncate text-sm font-bold" :class="item.isRead ? 'text-[#9a735d]' : 'text-[#422d20]'">{{ item.title }}</span>
+                    <span v-if="!item.isRead" class="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500"></span>
+                  </span>
+                  <span class="mt-0.5 block text-xs leading-5 text-[#9a735d]">{{ item.content }}</span>
+                  <span class="mt-1 block text-xs text-[#c0a894]">{{ formatNotificationTime(item.createdAt) }}</span>
+                </span>
+              </button>
+              <p v-if="!notifications.length" class="px-4 py-10 text-center text-sm text-[#c0a894]">暂无通知</p>
+            </div>
+          </div>
+        </div>
 
         <router-link
           to="/vip"

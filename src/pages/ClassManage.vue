@@ -168,6 +168,56 @@ function getStatusMeta(item: ClassVipItem) {
   return { label: '未授权', className: 'bg-[#fff7ed] text-[#c2410c]' }
 }
 
+// ===== 订单管理（会员开通确认） =====
+interface AdminOrderItem {
+  id: string
+  orderNo: string
+  teacherUsername: string
+  className: string
+  planLabel: string
+  amount: number
+  status: string
+  createdAt: number
+}
+const pendingOrders = ref<AdminOrderItem[]>([])
+const confirmingOrderId = ref('')
+
+async function loadPendingOrders() {
+  try {
+    const res = await api.get<{ orders?: AdminOrderItem[] }>('/admin/orders', { params: { status: 'pending' } })
+    pendingOrders.value = res.data.orders || []
+  } catch (error) {
+    console.error('加载订单失败:', error)
+  }
+}
+
+async function confirmOrder(orderId: string) {
+  confirmingOrderId.value = orderId
+  try {
+    const res = await api.put<{ message?: string }>(`/admin/orders/${orderId}/confirm`)
+    toast.success(res.data.message || '已确认到账并开通会员')
+    await Promise.all([loadPendingOrders(), loadMembers(), loadClasses()])
+  } catch (error: unknown) {
+    console.error('确认订单失败:', error)
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    toast.error(message || '确认订单失败')
+  } finally {
+    confirmingOrderId.value = ''
+  }
+}
+
+async function cancelOrderAdmin(orderId: string) {
+  try {
+    await api.put(`/admin/orders/${orderId}/cancel`)
+    toast.info('订单已取消')
+    await loadPendingOrders()
+  } catch (error: unknown) {
+    console.error('取消订单失败:', error)
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    toast.error(message || '取消订单失败')
+  }
+}
+
 async function loadMembers() {
   membersLoading.value = true
   try {
@@ -564,6 +614,7 @@ onMounted(() => {
     return
   }
   loadClasses()
+  loadPendingOrders()
 })
 </script>
 
@@ -819,6 +870,55 @@ onMounted(() => {
                 aria-label="搜索用户名"
               />
             </label>
+          </div>
+
+          <!-- 待确认订单（教师扫码支付后待管理员核实） -->
+          <div v-if="pendingOrders.length" class="mt-5 rounded-2xl border border-[#ffedd5] bg-[#fff7ed] p-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="material-symbols-rounded text-[20px] text-[#ea580c]">task_alt</span>
+                <h3 class="text-sm font-bold text-[#9a5a2b]">待确认订单（{{ pendingOrders.length }}）</h3>
+              </div>
+              <button type="button" class="text-sm font-semibold text-[#c2410c] hover:underline" @click="loadPendingOrders">刷新</button>
+            </div>
+            <p class="mt-1 text-xs text-[#b07a4f]">请先在微信/支付宝核实到账，再点击「确认到账」，系统将自动为该班级开通或续期会员并通知教师。</p>
+            <div class="mt-3 space-y-2">
+              <div
+                v-for="order in pendingOrders"
+                :key="order.id"
+                class="flex flex-col gap-3 rounded-xl border border-[#f5d7b8] bg-white p-3 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div class="min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-mono text-sm font-bold text-[#422d20]">{{ order.orderNo }}</span>
+                    <span class="rounded-full bg-[#fff7ed] px-2 py-0.5 text-xs font-semibold text-[#c2410c]">待确认</span>
+                  </div>
+                  <p class="mt-1 text-sm text-[#9a735d]">
+                    {{ order.teacherUsername }} · 班级「{{ order.className }}」· {{ order.planLabel }}
+                    <span class="font-semibold text-[#ea580c]">¥{{ order.amount }}</span>
+                    · {{ new Date(order.createdAt).toLocaleString('zh-CN', { hour12: false }) }}
+                  </p>
+                </div>
+                <div class="flex shrink-0 gap-2">
+                  <button
+                    type="button"
+                    class="inline-flex h-9 items-center gap-1 rounded-xl bg-[#ea580c] px-3.5 text-sm font-semibold text-white transition hover:bg-[#c2410c] disabled:opacity-50"
+                    :disabled="confirmingOrderId === order.id"
+                    @click="confirmOrder(order.id)"
+                  >
+                    <span class="material-symbols-rounded text-[16px] leading-none">verified</span>
+                    {{ confirmingOrderId === order.id ? '处理中…' : '确认到账' }}
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex h-9 items-center rounded-xl border border-[#f0e5da] px-3.5 text-sm font-semibold text-[#765f50] transition hover:bg-[#fff7f1]"
+                    @click="cancelOrderAdmin(order.id)"
+                  >
+                    取消
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div v-if="membersLoading" class="mt-5 rounded-2xl bg-[#fff8f2] px-5 py-14 text-center text-sm text-[#a1836d]">加载中…</div>

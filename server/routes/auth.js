@@ -250,4 +250,41 @@ router.get('/me', authMiddleware, async (req, res) => {
   })
 })
 
+// ===== 站内通知 =====
+// 我的通知列表（含未读数）
+router.get('/notifications', authMiddleware, async (req, res) => {
+  const rows = await db.prepare(
+    'SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50'
+  ).all(req.userId)
+
+  res.json({
+    notifications: rows.map(row => ({
+      id: row.id,
+      type: row.type,
+      title: row.title,
+      content: row.content,
+      isRead: !!row.is_read,
+      createdAt: Number(row.created_at),
+    })),
+    unreadCount: rows.filter(row => !row.is_read).length,
+  })
+})
+
+// 标记单条已读
+router.put('/notifications/:id/read', authMiddleware, async (req, res) => {
+  const result = await db.prepare(
+    'UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?'
+  ).run(req.params.id, req.userId)
+  if (!result.changes) {
+    return res.status(404).json({ error: '通知不存在' })
+  }
+  res.json({ success: true })
+})
+
+// 全部标记已读
+router.put('/notifications/read-all', authMiddleware, async (req, res) => {
+  await db.prepare('UPDATE notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0').run(req.userId)
+  res.json({ success: true })
+})
+
 export default router

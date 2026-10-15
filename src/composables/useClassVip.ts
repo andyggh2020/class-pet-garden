@@ -5,6 +5,7 @@ import type { ClassVipItem } from '@/types'
 export const CURRENT_CLASS_CHANGED_EVENT = 'pet-garden:current-class-changed'
 
 const currentClassVipActive = ref(false)
+const currentClassVipExpiresAt = ref<number | null>(null)
 
 export function getCurrentClassStorageKey(userId?: string | null) {
   return `pet-garden-current-class-${userId || 'guest'}`
@@ -37,14 +38,19 @@ export function useClassVip() {
       const res = await api.get('/vip')
       const item = (res.data.classes as ClassVipItem[] || []).find(cls => cls.id === classId)
       currentClassVipActive.value = Boolean(item?.vip?.isActive)
+      currentClassVipExpiresAt.value = item?.vip?.isActive && !item?.vip?.neverExpires && item?.vip?.expiresAt
+        ? item.vip.expiresAt
+        : null
     } catch (error) {
       console.error('加载班级 VIP 状态失败:', error)
       currentClassVipActive.value = false
+      currentClassVipExpiresAt.value = null
     }
   }
 
   return {
     currentClassVipActive,
+    currentClassVipExpiresAt,
     refreshClassVipStatus,
   }
 }

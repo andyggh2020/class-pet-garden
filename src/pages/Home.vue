@@ -21,7 +21,7 @@ import type { TeacherProfile } from '@/types'
 const { autoPlayEnabled: bgmAutoPlay, setAutoPlay: setBgmAutoPlay } = useBgm()
 
 const { openImportModal } = useStudentImport()
-const { currentClassVipActive, refreshClassVipStatus } = useClassVip()
+const { currentClassVipActive, currentClassVipExpiresAt, refreshClassVipStatus } = useClassVip()
 
 // Types
 interface Class {
@@ -606,6 +606,14 @@ const modalEvaluationRules = computed(() => {
 
 const stampCategoryRules = computed(() => {
   return rules.value.filter(rule => rule.category === stampEvalTab.value)
+})
+
+// 当前班级会员将在 7 天内到期时返回剩余天数，否则 null
+const vipExpiringDays = computed(() => {
+  const expiresAt = currentClassVipExpiresAt.value
+  if (!expiresAt) return null
+  const days = Math.ceil((expiresAt - Date.now()) / 86400000)
+  return days <= 7 ? days : null
 })
 
 const stampDimClass = computed(() =>
@@ -1603,6 +1611,20 @@ onUnmounted(() => {
     <template v-else>
       <AppShell active-page="dashboard" title="班级工作台" :navigation-dimmed="stampMode">
         <div class="flex min-w-0 flex-col gap-5" :class="stampMode ? 'pb-44 xl:pb-0' : ''">
+          <!-- 会员到期提醒（7 天内） -->
+          <div
+            v-if="vipExpiringDays !== null"
+            class="flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm"
+          >
+            <span class="material-symbols-rounded text-[18px] text-amber-500">workspace_premium</span>
+            <span class="font-semibold text-amber-700">
+              当前班级会员{{ vipExpiringDays <= 0 ? '今日到期' : `将在 ${vipExpiringDays} 天后到期` }}，到期后自动恢复基础版
+            </span>
+            <router-link to="/vip" class="ml-auto inline-flex items-center gap-1 font-semibold text-amber-700 underline transition hover:text-amber-800">
+              去续费
+              <span class="material-symbols-rounded text-[16px]">arrow_forward</span>
+            </router-link>
+          </div>
           <header class="relative flex min-h-[62px] flex-wrap items-center gap-3">
             <div v-if="currentClass" class="relative" data-class-switcher :class="stampDimClass">
               <button

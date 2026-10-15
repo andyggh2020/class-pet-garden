@@ -218,6 +218,32 @@ export async function initDb() {
       updated_at BIGINT NOT NULL,
       CONSTRAINT fk_vip_class FOREIGN KEY (class_id) REFERENCES classes(id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+    `CREATE TABLE IF NOT EXISTS orders (
+      id VARCHAR(36) PRIMARY KEY,
+      order_no VARCHAR(32) NOT NULL UNIQUE,
+      user_id VARCHAR(36) NOT NULL,
+      class_id VARCHAR(36) NOT NULL,
+      plan VARCHAR(32) NOT NULL,
+      amount INT NOT NULL,
+      status VARCHAR(32) NOT NULL DEFAULT 'pending',
+      created_at BIGINT,
+      confirmed_at BIGINT,
+      confirmed_by VARCHAR(36),
+      INDEX idx_orders_user_id (user_id),
+      INDEX idx_orders_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+    `CREATE TABLE IF NOT EXISTS notifications (
+      id VARCHAR(36) PRIMARY KEY,
+      user_id VARCHAR(36) NOT NULL,
+      type VARCHAR(32) NOT NULL DEFAULT 'system',
+      title VARCHAR(255) NOT NULL,
+      content TEXT,
+      is_read TINYINT NOT NULL DEFAULT 0,
+      created_at BIGINT,
+      INDEX idx_notifications_user_id (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   ]
 
   for (const statement of statements) {

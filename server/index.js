@@ -22,6 +22,7 @@ import ruleRoutes from './routes/rules.js'
 import backupRoutes from './routes/backup.js'
 import settingsRoutes from './routes/settings.js'
 import vipRoutes from './routes/vip.js'
+import ordersRoutes from './routes/orders.js'
 import adminRoutes from './routes/admin.js'
 import publicRoutes from './routes/public.js'
 
@@ -62,6 +63,7 @@ function registerApiRoutes(basePath) {
   app.use(`${basePath}/backup`, backupRoutes)
   app.use(`${basePath}/settings`, settingsRoutes)
   app.use(`${basePath}/vip`, vipRoutes)
+  app.use(`${basePath}/orders`, ordersRoutes)
   app.use(`${basePath}/admin`, adminRoutes)
   app.get(`${basePath}/health`, (req, res) => {
     res.json({ status: 'ok', timestamp: Date.now() })

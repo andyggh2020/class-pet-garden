@@ -302,6 +302,115 @@ router.put('/vip/authorize', async (req, res) => {
   })
 })
 
+// ===== 订单管理（会员开通确认） =====
+// 全部订单（可按 status 过滤）
+router.get('/orders', async (req, res) => {
+  const status = typeof req.query.status === 'string' ? req.query.status : ''
+  const rows = status
+    ? await db.prepare(`
+        SELECT o.*, c.name AS class_name, u.username AS teacher_username
+        FROM orders o
+        LEFT JOIN classes c ON c.id = o.class_id
+        LEFT JOIN users u ON u.id = o.user_id
+        WHERE o.status = ?
+        ORDER BY o.created_at DESC
+        LIMIT 200
+      `).all(status)
+    : await db.prepare(`
+        SELECT o.*, c.name AS class_name, u.username AS teacher_username
+        FROM orders o
+        LEFT JOIN classes c ON c.id = o.class_id
+        LEFT JOIN users u ON u.id = o.user_id
+        ORDER BY o.created_at DESC
+        LIMIT 200
+      `).all()
+
+  res.json({
+    orders: rows.map(row => ({
+      id: row.id,
+      orderNo: row.order_no,
+      userId: row.user_id,
+      teacherUsername: row.teacher_username || '未知',
+      classId: row.class_id,
+      className: row.class_name || '未知班级',
+      plan: row.plan,
+      planLabel: VIP_PLANS[row.plan]?.label || row.plan,
+      amount: row.amount,
+      status: row.status,
+      createdAt: Number(row.created_at),
+      confirmedAt: row.confirmed_at ? Number(row.confirmed_at) : null,
+    })),
+  })
+})
+
+// 确认收款：开通/续期班级 VIP + 订单状态 + 通知教师
+router.put('/orders/:id/confirm', async (req, res) => {
+  const order = await db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
+  if (!order) {
+    return res.status(404).json({ error: '订单不存在' })
+  }
+  if (order.status !== 'pending') {
+    return res.status(400).json({ error: '仅待确认订单可以确认' })
+  }
+
+  const planInfo = VIP_PLANS[order.plan]
+  if (!planInfo) {
+    return res.status(400).json({ error: '订单方案无效' })
+  }
+
+  const now = Date.now()
+  const existing = await db.prepare('SELECT * FROM class_vip_subscriptions WHERE class_id = ?').get(order.class_id)
+  // 续期：以原到期时间与当前时间中较晚者为基准
+  const base = existing && existing.status === 'active' && existing.expires_at > now
+    ? existing.expires_at
+    : now
+  const expiresAt = base + planInfo.days * 86400000
+
+  if (existing) {
+    await db.prepare(`
+      UPDATE class_vip_subscriptions
+      SET plan = ?, status = 'active', expires_at = ?, updated_at = ?
+      WHERE class_id = ?
+    `).run(order.plan, expiresAt, now, order.class_id)
+  } else {
+    await db.prepare(`
+      INSERT INTO class_vip_subscriptions (id, class_id, plan, status, started_at, expires_at, created_at, updated_at)
+      VALUES (?, ?, ?, 'active', ?, ?, ?, ?)
+    `).run(uuidv4(), order.class_id, order.plan, base, expiresAt, now, now)
+  }
+
+  await db.prepare(
+    "UPDATE orders SET status = 'confirmed', confirmed_at = ?, confirmed_by = ? WHERE id = ?"
+  ).run(now, 'admin', order.id)
+
+  const cls = await db.prepare('SELECT name FROM classes WHERE id = ?').get(order.class_id)
+  await db.prepare(`
+    INSERT INTO notifications (id, user_id, type, title, content, is_read, created_at)
+    VALUES (?, ?, 'vip', ?, ?, 0, ?)
+  `).run(
+    uuidv4(),
+    order.user_id,
+    '会员已开通',
+    `班级「${cls?.name || ''}」的${planInfo.label || order.plan}已生效，到期时间 ${new Date(expiresAt).toLocaleDateString('zh-CN')}。`,
+    now,
+  )
+
+  res.json({ success: true, message: '已确认收款并开通会员', expiresAt })
+})
+
+// 取消订单（管理员）
+router.put('/orders/:id/cancel', async (req, res) => {
+  const order = await db.prepare('SELECT * FROM orders WHERE id = ?').get(req.params.id)
+  if (!order) {
+    return res.status(404).json({ error: '订单不存在' })
+  }
+  if (order.status !== 'pending') {
+    return res.status(400).json({ error: '仅待确认订单可以取消' })
+  }
+  await db.prepare("UPDATE orders SET status = 'cancelled' WHERE id = ?").run(order.id)
+  res.json({ success: true, message: '订单已取消' })
+})
+
 async function listAllMembers() {
   const rows = await db.prepare(`
     SELECT
