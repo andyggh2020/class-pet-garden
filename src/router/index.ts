@@ -13,6 +13,8 @@ import Login from '@/pages/Login.vue'
 import Register from '@/pages/Register.vue'
 import Guide from '@/pages/Guide.vue'
 import Plans from '@/pages/Plans.vue'
+import Terms from '@/pages/Terms.vue'
+import Privacy from '@/pages/Privacy.vue'
 import AdminDashboard from '@/pages/AdminDashboard.vue'
 import StudentShare from '@/pages/StudentShare.vue'
 
@@ -33,6 +35,8 @@ const router = createRouter({
     { path: '/login', alias: '/pet-garden/login', name: 'login', component: Login },
     { path: '/register', alias: '/pet-garden/register', name: 'register', component: Register },
     { path: '/guide', alias: '/pet-garden/guide', name: 'guide', component: Guide },
+    { path: '/terms', alias: '/pet-garden/terms', name: 'terms', component: Terms },
+    { path: '/privacy', alias: '/pet-garden/privacy', name: 'privacy', component: Privacy },
     { path: '/plans', alias: '/pet-garden/plans', name: 'plans', component: Plans },
     { path: '/admin', alias: '/pet-garden/admin', name: 'admin-dashboard', component: AdminDashboard },
     { path: '/share/:studentId', alias: '/pet-garden/share/:studentId', name: 'student-share', component: StudentShare }

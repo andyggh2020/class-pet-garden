@@ -170,7 +170,11 @@ async function handleSubmit() {
 
             <label class="flex items-start gap-2 pt-1 text-sm text-[#666]">
               <input v-model="agreed" type="checkbox" class="mt-0.5 h-4 w-4 rounded border-[#edeff2]" />
-              <span>我已阅读并同意 <span class="font-semibold text-[#ff5c00]">《用户协议》</span> 和 <span class="font-semibold text-[#ff5c00]">《隐私政策》</span></span>
+              <span>我已阅读并同意
+                <router-link to="/terms" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#ff5c00] hover:underline">《用户协议》</router-link>
+                和
+                <router-link to="/privacy" target="_blank" rel="noopener noreferrer" class="font-semibold text-[#ff5c00] hover:underline">《隐私政策》</router-link>
+              </span>
             </label>
 
             <button
