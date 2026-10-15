@@ -109,7 +109,7 @@ onMounted(async () => {
           <a href="#flow" class="hover:text-[#d97706]">使用流程</a>
           <a href="#plans" class="hover:text-[#d97706]">套餐方案</a>
           <a href="#faq" class="hover:text-[#d97706]">常见问题</a>
-          <router-link to="/guide" class="hover:text-[#d97706]">操作说明</router-link>
+          <router-link to="/guide" target="_blank" rel="noopener noreferrer" class="hover:text-[#d97706]">操作说明</router-link>
           <a href="#contact" class="hover:text-[#d97706]">联系客服</a>
         </nav>
         <div class="flex items-center gap-2">

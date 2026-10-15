@@ -492,6 +492,15 @@ onMounted(() => {
                 管理全站注册教师账户，以及全部班级与 VIP 授权状态。
               </p>
             </div>
+            <router-link
+              to="/guide"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex h-10 shrink-0 items-center gap-1.5 self-start rounded-xl border border-[#f0e5da] bg-white px-4 text-sm font-semibold text-[#765f50] transition hover:bg-[#fff7f1] sm:self-auto"
+            >
+              <span class="material-symbols-rounded text-[18px] leading-none">menu_book</span>
+              操作说明
+            </router-link>
           </div>
 
           <div class="mt-7 flex flex-wrap gap-3">

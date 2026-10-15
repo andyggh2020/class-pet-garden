@@ -161,9 +161,11 @@ function guestContinue() {
 
           <router-link
             to="/guide"
+            target="_blank"
+            rel="noopener noreferrer"
             class="mt-2 block w-full text-center text-sm text-[#888] transition hover:text-[#ff5c00]"
           >
-            📖 查看操作说明
+            📖 查看操作说明（新窗口）
           </router-link>
         </div>
       </section>
