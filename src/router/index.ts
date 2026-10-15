@@ -11,6 +11,7 @@ import ClassManage from '@/pages/ClassManage.vue'
 import ClassTasks from '@/pages/ClassTasks.vue'
 import Login from '@/pages/Login.vue'
 import Register from '@/pages/Register.vue'
+import Guide from '@/pages/Guide.vue'
 import StudentShare from '@/pages/StudentShare.vue'
 
 const router = createRouter({
@@ -29,6 +30,7 @@ const router = createRouter({
     { path: '/vip', alias: '/pet-garden/vip', name: 'vip', component: ClassVip },
     { path: '/login', alias: '/pet-garden/login', name: 'login', component: Login },
     { path: '/register', alias: '/pet-garden/register', name: 'register', component: Register },
+    { path: '/guide', alias: '/pet-garden/guide', name: 'guide', component: Guide },
     { path: '/share/:studentId', alias: '/pet-garden/share/:studentId', name: 'student-share', component: StudentShare }
   ]
 })

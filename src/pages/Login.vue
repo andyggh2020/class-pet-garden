@@ -158,6 +158,13 @@ function guestContinue() {
           >
             以游客身份继续
           </button>
+
+          <router-link
+            to="/guide"
+            class="mt-2 block w-full text-center text-sm text-[#888] transition hover:text-[#ff5c00]"
+          >
+            📖 查看操作说明
+          </router-link>
         </div>
       </section>
     </div>
