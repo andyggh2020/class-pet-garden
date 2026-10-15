@@ -111,7 +111,15 @@ onMounted(async () => {
           <a href="#contact" class="hover:text-[#d97706]">联系客服</a>
         </nav>
         <div class="flex items-center gap-2">
-          <button type="button" class="hidden rounded-full px-4 py-2 text-sm font-semibold text-[#b85e25] hover:bg-[#fff3eb] sm:inline-block" @click="goLogin">管理员登录</button>
+          <button
+            type="button"
+            class="hidden items-center gap-2 rounded-xl border border-[#edeff2] bg-white px-3 py-1.5 text-sm font-semibold shadow-sm transition hover:border-orange-200 hover:bg-[#fffaf5] sm:inline-flex"
+            @click="goLogin"
+          >
+            <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[#ffe7c8] text-[#d97706]"><span class="material-symbols-rounded text-[18px]">person</span></span>
+            <span>游客</span>
+            <span class="text-sm text-[#999]">点击登录</span>
+          </button>
           <button type="button" class="rounded-full bg-[#ff5c00] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#e84e00]" @click="goWorkbench">进入工作台</button>
         </div>
       </div>
