@@ -122,6 +122,48 @@ router.get('/dashboard', async (req, res, next) => {
         expiringCount: expiringSoon.length,
         records7d: records7d.length,
       },
+      // 增长与转化
+      growth: (() => {
+        const teacherIds = new Set(teachers.map(t => t.id))
+        const teacherWithClass = new Set(classes.map(c => c.user_id).filter(Boolean))
+        const inFunnel = [...teacherWithClass].filter(id => teacherIds.has(id)).length
+        const planDistribution = {}
+        for (const v of activeVips) {
+          planDistribution[v.plan] = (planDistribution[v.plan] || 0) + 1
+        }
+        // 近 8 周（自然周）新增教师与收入
+        const weeks = []
+        const now2 = new Date()
+        const weekStartBase = new Date(now2)
+        weekStartBase.setHours(0, 0, 0, 0)
+        weekStartBase.setDate(weekStartBase.getDate() - ((weekStartBase.getDay() + 6) % 7))
+        for (let i = 7; i >= 0; i--) {
+          const start = weekStartBase.getTime() - i * 7 * DAY
+          weeks.push({ start, end: start + 7 * DAY, teachers: 0, income: 0 })
+        }
+        for (const u of teachers) {
+          const ts = Number(u.created_at)
+          const w = weeks.find(x => ts >= x.start && ts < x.end)
+          if (w) w.teachers++
+        }
+        for (const v of vipAll) {
+          if (v.status !== 'active') continue
+          const ts = Number(v.started_at)
+          const w = weeks.find(x => ts >= x.start && ts < x.end)
+          if (w) w.income += priceOf(v.plan)
+        }
+        return {
+          registerRate: teachers.length ? Math.round(inFunnel / teachers.length * 100) : 0,
+          teachersWithClass: inFunnel,
+          openRate: classes.length ? Math.round(activeVips.length / classes.length * 100) : 0,
+          planDistribution,
+          weekly: weeks.map((w, i) => ({
+            label: `W${i + 1}`,
+            teachers: w.teachers,
+            income: w.income,
+          })),
+        }
+      })(),
       expiringSoon,
     })
   } catch (error) {

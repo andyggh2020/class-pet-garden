@@ -69,6 +69,35 @@ async function copyShareLink() {
   }
 }
 
+// ===== 家长订阅 =====
+const subscribePhone = ref('')
+const subscribing = ref(false)
+const subscribeMessage = ref('')
+const subscribeOk = ref(false)
+
+async function submitSubscribe() {
+  subscribeMessage.value = ''
+  subscribeOk.value = false
+  if (!/^1\d{10}$/.test(subscribePhone.value.trim())) {
+    subscribeMessage.value = '请输入正确的 11 位手机号'
+    return
+  }
+  subscribing.value = true
+  try {
+    const res = await publicApi.post('/parent-notify/subscribe', {
+      studentId: student.value?.id,
+      phone: subscribePhone.value.trim(),
+    })
+    subscribeMessage.value = res.data?.message || '订阅成功'
+    subscribeOk.value = true
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    subscribeMessage.value = message || '订阅失败，请稍后再试'
+  } finally {
+    subscribing.value = false
+  }
+}
+
 onMounted(async () => {
   const studentId = route.params.studentId
   if (typeof studentId !== 'string' || !studentId) {
@@ -176,6 +205,31 @@ onMounted(async () => {
               还没有成长记录，继续加油！
             </p>
           </div>
+        </section>
+
+        <!-- 家长订阅：孩子有新表扬时通知 -->
+        <section class="mt-4 rounded-3xl bg-white p-6 shadow-sm">
+          <h2 class="text-base font-bold text-[#422d20]">订阅成长提醒</h2>
+          <p class="mt-1 text-sm leading-6 text-[#9a735d]">留下手机号，孩子获得表扬时会第一时间通知你（仅发送表扬类消息，不会泄露给第三方）。</p>
+          <div class="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input
+              v-model="subscribePhone"
+              type="tel"
+              maxlength="11"
+              inputmode="numeric"
+              class="h-11 min-w-0 flex-1 rounded-xl border border-[#edeff2] px-3.5 text-sm outline-none focus:border-orange-400"
+              placeholder="请输入家长手机号"
+            />
+            <button
+              type="button"
+              class="inline-flex h-11 shrink-0 items-center justify-center rounded-xl bg-[#ff5c00] px-5 text-sm font-bold text-white transition hover:bg-[#e84e00] disabled:opacity-60"
+              :disabled="subscribing"
+              @click="submitSubscribe"
+            >
+              {{ subscribing ? '提交中…' : '订阅提醒' }}
+            </button>
+          </div>
+          <p v-if="subscribeMessage" class="mt-2 text-sm" :class="subscribeOk ? 'text-emerald-600' : 'text-rose-500'">{{ subscribeMessage }}</p>
         </section>
 
         <p class="mt-6 text-center text-sm text-[#9a735d]">

@@ -26,6 +26,13 @@ interface DashboardData {
   income: { total: number; today: number }
   trend: TrendDay[]
   metrics: { activeAuthors: number; vipCoverage: number; expiringCount: number; records7d: number }
+  growth?: {
+    registerRate: number
+    teachersWithClass: number
+    openRate: number
+    planDistribution: Record<string, number>
+    weekly: Array<{ label: string; teachers: number; income: number }>
+  }
   expiringSoon: ExpiringVip[]
 }
 
@@ -89,9 +96,52 @@ const quickActions = [
   { icon: 'manage_accounts', label: '管理用户', action: () => router.push({ path: '/manage', query: { tab: 'members' } }) },
   { icon: 'verified', label: '会员授权', action: () => router.push({ path: '/manage', query: { tab: 'members' } }) },
   { icon: 'restaurant', label: '收款设置', action: () => router.push({ path: '/manage', query: { tab: 'payment' } }) },
+  { icon: 'swap_horiz', label: '家长通知', action: () => router.push('/admin/parent-notify') },
+  { icon: 'edit', label: '用户反馈', action: () => router.push({ path: '/manage', query: { tab: 'feedback' } }) },
   { icon: 'save', label: '数据备份', action: exportBackup },
   { icon: 'menu_book', label: '操作说明', action: () => window.open(router.resolve('/guide').href, '_blank', 'noopener,noreferrer') },
 ]
+
+const PLAN_LABELS: Record<string, string> = { month: '月会员', semester: '学期会员', year: '年度会员', manual: '手动授权', demo: '演示', welcome: '新班赠送' }
+function planLabel(plan: string) {
+  return PLAN_LABELS[plan] || plan
+}
+
+const planCount = computed(() => {
+  const dist = data.value?.growth?.planDistribution || {}
+  return Object.values(dist).reduce((sum, n) => sum + n, 0)
+})
+
+const growthWeekly = computed(() => data.value?.growth?.weekly || [])
+const growthMaxTeachers = computed(() => Math.max(1, ...growthWeekly.value.map(w => w.teachers)))
+const growthMaxIncome = computed(() => Math.max(1, ...growthWeekly.value.map(w => w.income)))
+
+const growthBars = computed(() => {
+  const innerW = chartW - 24
+  const innerH = 200 - 16 - 26
+  const slot = innerW / Math.max(1, growthWeekly.value.length)
+  const barW = Math.min(36, slot * 0.42)
+  return growthWeekly.value.map((w, i) => {
+    const h = (w.teachers / growthMaxTeachers.value) * (innerH - 8)
+    return {
+      x: 12 + i * slot + (slot - barW) / 2,
+      y: 200 - 26 - h,
+      w: barW,
+      h: Math.max(2, h),
+      cx: 12 + i * slot + slot / 2,
+      label: w.label,
+    }
+  })
+})
+
+const growthLine = computed(() => {
+  const innerH = 200 - 16 - 26
+  return growthBars.value.map((b, i) => {
+    const income = growthWeekly.value[i]?.income || 0
+    const y = 200 - 26 - (income / growthMaxIncome.value) * (innerH - 8)
+    return `${b.cx},${Math.max(16, y)}`
+  }).join(' ')
+})
 
 // ===== 趋势图（纯 SVG：柱状=每日评价，折线=每日新增教师） =====
 const chartW = 720
@@ -249,10 +299,74 @@ onMounted(() => {
         </div>
       </section>
 
+      <!-- 增长与转化 -->
+      <section class="grid gap-4 xl:grid-cols-[1.6fr_1fr]">
+        <div class="rounded-3xl border border-[#f1e5db] bg-white p-5 shadow-[0_10px_30px_rgba(101,71,45,0.05)]">
+          <h2 class="font-serif text-lg font-bold text-[#422d20]">近 8 周增长</h2>
+          <div class="mt-4 flex items-center gap-4 text-xs text-[#a1836d]">
+            <span class="flex items-center gap-1.5"><span class="h-2.5 w-2.5 rounded bg-[#ffb066]"></span>新增教师</span>
+            <span class="flex items-center gap-1.5"><span class="h-0.5 w-4 rounded bg-[#d97706]"></span>会员收入</span>
+          </div>
+          <svg :viewBox="`0 0 ${chartW} 200`" class="mt-3 w-full" role="img" aria-label="近8周增长趋势">
+            <template v-if="growthWeekly.length">
+              <rect
+                v-for="(b, i) in growthBars"
+                :key="'gb-' + i"
+                :x="b.x"
+                :y="b.y"
+                :width="b.w"
+                :height="b.h"
+                rx="6"
+                class="fill-[#ffce9e]"
+              />
+              <polyline :points="growthLine" fill="none" stroke="#d97706" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+              <text v-for="(b, i) in growthBars" :key="'gl-' + i" :x="b.cx" :y="192" text-anchor="middle" class="fill-[#b59a86]" font-size="12">{{ b.label }}</text>
+            </template>
+          </svg>
+        </div>
+
+        <div class="rounded-3xl border border-[#f1e5db] bg-white p-5 shadow-[0_10px_30px_rgba(101,71,45,0.05)]">
+          <h2 class="font-serif text-lg font-bold text-[#422d20]">转化漏斗</h2>
+          <div class="mt-4 space-y-3">
+            <div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-[#806b5b]">注册 → 创建班级</span>
+                <span class="font-bold text-[#b76129]">{{ data?.growth?.registerRate ?? 0 }}%</span>
+              </div>
+              <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-[#f7efe6]">
+                <div class="h-full rounded-full bg-[#ffb066]" :style="{ width: `${data?.growth?.registerRate ?? 0}%` }" />
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center justify-between text-sm">
+                <span class="text-[#806b5b]">班级 → 开通会员</span>
+                <span class="font-bold text-[#059669]">{{ data?.growth?.openRate ?? 0 }}%</span>
+              </div>
+              <div class="mt-1.5 h-2 overflow-hidden rounded-full bg-[#ecfdf5]">
+                <div class="h-full rounded-full bg-[#34d399]" :style="{ width: `${data?.growth?.openRate ?? 0}%` }" />
+              </div>
+            </div>
+          </div>
+          <div class="mt-5 border-t border-[#f3ece4] pt-4">
+            <p class="text-sm font-bold text-[#795f50]">会员方案分布</p>
+            <div class="mt-3 space-y-2">
+              <div v-for="(count, plan) in data?.growth?.planDistribution || {}" :key="plan" class="flex items-center gap-3">
+                <span class="w-20 shrink-0 text-sm text-[#9a735d]">{{ planLabel(plan) }}</span>
+                <div class="h-2 flex-1 overflow-hidden rounded-full bg-[#f7efe6]">
+                  <div class="h-full rounded-full bg-[#d97706]" :style="{ width: `${planCount === 0 ? 0 : (count / planCount) * 100}%` }" />
+                </div>
+                <span class="w-8 shrink-0 text-right font-mono text-sm font-bold text-[#422d20]">{{ count }}</span>
+              </div>
+              <p v-if="!Object.keys(data?.growth?.planDistribution || {}).length" class="text-sm text-[#c0a894]">暂无生效会员</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- 快捷操作 -->
       <section class="rounded-3xl border border-[#f1e5db] bg-white p-5 shadow-[0_10px_30px_rgba(101,71,45,0.05)]">
         <h2 class="font-serif text-lg font-bold text-[#422d20]">快捷操作</h2>
-        <div class="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-6">
+        <div class="mt-4 grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-8">
           <button
             v-for="action in quickActions"
             :key="action.label"

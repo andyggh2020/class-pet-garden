@@ -17,6 +17,7 @@ import Plans from '@/pages/Plans.vue'
 import Terms from '@/pages/Terms.vue'
 import Privacy from '@/pages/Privacy.vue'
 import AdminDashboard from '@/pages/AdminDashboard.vue'
+import AdminParentNotify from '@/pages/AdminParentNotify.vue'
 import StudentShare from '@/pages/StudentShare.vue'
 import ClassShare from '@/pages/ClassShare.vue'
 
@@ -42,6 +43,7 @@ const router = createRouter({
     { path: '/privacy', alias: '/pet-garden/privacy', name: 'privacy', component: Privacy },
     { path: '/plans', alias: '/pet-garden/plans', name: 'plans', component: Plans },
     { path: '/admin', alias: '/pet-garden/admin', name: 'admin-dashboard', component: AdminDashboard },
+    { path: '/admin/parent-notify', alias: '/pet-garden/admin/parent-notify', name: 'admin-parent-notify', component: AdminParentNotify },
     { path: '/share/:studentId', alias: '/pet-garden/share/:studentId', name: 'student-share', component: StudentShare },
     { path: '/share/class/:classId', alias: '/pet-garden/share/class/:classId', name: 'class-share', component: ClassShare }
   ]

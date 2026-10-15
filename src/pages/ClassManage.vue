@@ -13,7 +13,7 @@ const route = useRoute()
 const { api, isAdmin } = useAuth()
 const toast = useToast()
 
-type AdminTab = 'classes' | 'members' | 'payment'
+type AdminTab = 'classes' | 'members' | 'payment' | 'feedback'
 
 // 收款信息（二维码 + 管理员微信号）
 const paymentLoading = ref(false)
@@ -47,7 +47,7 @@ const qrPreviewSrc = computed(() => paymentQrUrl.value.trim())
 // 支持从管理工作台快捷操作跳转并直接定位 tab，如 /manage?tab=members
 const initialTab = (): AdminTab => {
   const q = route.query.tab
-  if (q === 'classes' || q === 'members' || q === 'payment') return q
+  if (q === 'classes' || q === 'members' || q === 'payment' || q === 'feedback') return q
   return 'classes'
 }
 const activeTab = ref<AdminTab>(initialTab())
@@ -215,6 +215,51 @@ async function cancelOrderAdmin(orderId: string) {
     console.error('取消订单失败:', error)
     const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
     toast.error(message || '取消订单失败')
+  }
+}
+
+// ===== 用户反馈 =====
+interface FeedbackItem {
+  id: string
+  type: string
+  content: string
+  contact: string
+  status: string
+  createdAt: number
+}
+const feedbacks = ref<FeedbackItem[]>([])
+const feedbacksLoading = ref(false)
+
+const FEEDBACK_TYPE_LABELS: Record<string, string> = {
+  suggestion: '功能建议',
+  bug: '问题报告',
+  billing: '会员/收费',
+  other: '其他',
+}
+
+async function loadFeedbacks() {
+  feedbacksLoading.value = true
+  try {
+    const res = await api.get<{ feedbacks?: FeedbackItem[] }>('/feedback/all')
+    feedbacks.value = res.data.feedbacks || []
+  } catch (error) {
+    console.error('加载反馈失败:', error)
+  } finally {
+    feedbacksLoading.value = false
+  }
+}
+
+const pendingFeedbackCount = computed(() => feedbacks.value.filter(f => f.status !== 'done').length)
+
+async function toggleFeedbackStatus(item: FeedbackItem) {
+  const next = item.status === 'done' ? 'pending' : 'done'
+  try {
+    await api.put(`/feedback/${item.id}/status`, { status: next })
+    item.status = next
+    toast.success(next === 'done' ? '已标记为已处理' : '已恢复为待处理')
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    toast.error(message || '操作失败')
   }
 }
 
@@ -615,6 +660,7 @@ onMounted(() => {
   }
   loadClasses()
   loadPendingOrders()
+  loadFeedbacks()
 })
 </script>
 
@@ -710,6 +756,15 @@ onMounted(() => {
             @click="switchTab('payment')"
           >
             收款设置
+          </button>
+          <button
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition"
+            :class="activeTab === 'feedback' ? 'bg-[#fff0e2] text-[#b85e25] shadow-[inset_0_0_0_1px_rgba(234,151,86,0.18)]' : 'bg-[#fff8f2] text-[#765f50] hover:bg-[#fff7f1] hover:text-[#b85e25]'"
+            @click="switchTab('feedback')"
+          >
+            用户反馈
+            <span v-if="pendingFeedbackCount > 0" class="rounded-full bg-rose-500 px-1.5 text-xs font-bold text-white">{{ pendingFeedbackCount }}</span>
           </button>
         </div>
 
@@ -984,6 +1039,56 @@ onMounted(() => {
                     删除账户
                   </button>
                 </div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div v-else-if="activeTab === 'feedback'">
+          <div class="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p class="text-sm font-bold tracking-[0.16em] text-[#d78248]">USER FEEDBACK</p>
+              <h2 class="mt-1 font-serif text-2xl font-bold text-[#422d20]">用户反馈</h2>
+              <p class="mt-1 text-sm text-[#9a735d]">来自「操作说明 → 帮助与反馈」的提交，共 {{ feedbacks.length }} 条，待处理 {{ pendingFeedbackCount }} 条。</p>
+            </div>
+            <button type="button" class="inline-flex h-10 shrink-0 items-center gap-1.5 self-start rounded-xl border border-[#f0e5da] bg-white px-4 text-sm font-semibold text-[#765f50] transition hover:bg-[#fff7f1] lg:self-auto" @click="loadFeedbacks">
+              <span class="material-symbols-rounded text-[18px] leading-none">refresh</span>
+              刷新
+            </button>
+          </div>
+
+          <div v-if="feedbacksLoading" class="mt-5 rounded-2xl bg-[#fff8f2] px-5 py-14 text-center text-sm text-[#a1836d]">加载中…</div>
+          <div v-else-if="!feedbacks.length" class="mt-5 rounded-2xl bg-[#fff8f2] px-5 py-14 text-center">
+            <span class="material-symbols-rounded text-[40px] text-[#e8c9ae]">edit</span>
+            <p class="mt-3 text-sm font-medium text-[#75533d]">还没有收到用户反馈</p>
+          </div>
+          <div v-else class="mt-5 space-y-3">
+            <article
+              v-for="item in feedbacks"
+              :key="item.id"
+              class="rounded-2xl border p-4"
+              :class="item.status === 'done' ? 'border-[#f3ece4] bg-[#faf9f7]' : 'border-[#ffedd5] bg-[#fffdfb]'"
+            >
+              <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="rounded-full px-2.5 py-0.5 text-xs font-bold" :class="item.status === 'done' ? 'bg-emerald-50 text-emerald-600' : 'bg-amber-50 text-amber-600'">
+                      {{ item.status === 'done' ? '已处理' : '待处理' }}
+                    </span>
+                    <span class="rounded-full bg-[#fff3e7] px-2.5 py-0.5 text-xs font-semibold text-[#b76129]">{{ FEEDBACK_TYPE_LABELS[item.type] || item.type }}</span>
+                    <span class="text-xs text-[#b0927c]">{{ new Date(item.createdAt).toLocaleString('zh-CN', { hour12: false }) }}</span>
+                    <span v-if="item.contact" class="font-mono text-xs text-[#9a735d]">联系：{{ item.contact }}</span>
+                  </div>
+                  <p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-[#4d3527]">{{ item.content }}</p>
+                </div>
+                <button
+                  type="button"
+                  class="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl border border-[#f0e5da] bg-white px-3.5 text-sm font-semibold text-[#765f50] transition hover:bg-[#fff7f1]"
+                  @click="toggleFeedbackStatus(item)"
+                >
+                  <span class="material-symbols-rounded text-[16px] leading-none">{{ item.status === 'done' ? 'restart_alt' : 'check' }}</span>
+                  {{ item.status === 'done' ? '恢复待处理' : '标记已处理' }}
+                </button>
               </div>
             </article>
           </div>

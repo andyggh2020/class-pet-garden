@@ -246,6 +246,39 @@ export async function initDb() {
       created_at BIGINT,
       INDEX idx_notifications_user_id (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+    `CREATE TABLE IF NOT EXISTS feedbacks (
+      id VARCHAR(36) PRIMARY KEY,
+      type VARCHAR(32) NOT NULL DEFAULT 'suggestion',
+      content TEXT NOT NULL,
+      contact VARCHAR(64),
+      status VARCHAR(32) NOT NULL DEFAULT 'pending',
+      created_at BIGINT,
+      INDEX idx_feedbacks_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+    `CREATE TABLE IF NOT EXISTS parent_subscribes (
+      id VARCHAR(36) PRIMARY KEY,
+      student_id VARCHAR(36) NOT NULL,
+      phone VARCHAR(32) NOT NULL,
+      channel VARCHAR(16) NOT NULL DEFAULT 'sms',
+      created_at BIGINT,
+      UNIQUE KEY uk_subscribe_student_phone (student_id, phone),
+      INDEX idx_subscribes_student (student_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+    `CREATE TABLE IF NOT EXISTS notify_logs (
+      id VARCHAR(36) PRIMARY KEY,
+      student_id VARCHAR(36),
+      student_name VARCHAR(64),
+      class_id VARCHAR(36),
+      content VARCHAR(512) NOT NULL,
+      channel VARCHAR(16) NOT NULL DEFAULT 'sms',
+      status VARCHAR(16) NOT NULL DEFAULT 'pending',
+      created_at BIGINT,
+      sent_at BIGINT,
+      INDEX idx_notify_logs_status (status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   ]
 
   for (const statement of statements) {

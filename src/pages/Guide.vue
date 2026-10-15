@@ -1,4 +1,39 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import axios from 'axios'
+
+const publicApi = axios.create({ baseURL: '/pet-garden/api' })
+
+const feedbackType = ref('suggestion')
+const feedbackContent = ref('')
+const feedbackContact = ref('')
+const feedbackSubmitting = ref(false)
+const feedbackMessage = ref('')
+
+async function submitFeedback() {
+  feedbackMessage.value = ''
+  if (feedbackContent.value.trim().length < 5) {
+    feedbackMessage.value = '请至少填写 5 个字'
+    return
+  }
+  feedbackSubmitting.value = true
+  try {
+    const res = await publicApi.post('/feedback', {
+      type: feedbackType.value,
+      content: feedbackContent.value.trim(),
+      contact: feedbackContact.value.trim(),
+    })
+    feedbackMessage.value = res.data?.message || '感谢反馈！'
+    feedbackContent.value = ''
+    feedbackContact.value = ''
+  } catch (error: unknown) {
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    feedbackMessage.value = message || '提交失败，请稍后再试'
+  } finally {
+    feedbackSubmitting.value = false
+  }
+}
+
 const sections = [
   { id: 'intro', title: '简介' },
   { id: 'quick-start', title: '快速开始' },
@@ -192,6 +227,42 @@ const sections = [
             <li>扣分请配合沟通使用，积分体系以正向激励为主。</li>
             <li>如遇数据异常，请联系客服，不要反复重复导入。</li>
           </ul>
+        </section>
+
+        <!-- 帮助与反馈 -->
+        <section id="feedback" class="mt-6 rounded-2xl border border-[#eef0f3] bg-white p-6 shadow-sm scroll-mt-6">
+          <h2 class="text-lg font-bold text-[#1a1a1a]">帮助与反馈</h2>
+          <p class="mt-1 text-sm text-[#777]">没找到答案？把问题或建议告诉我们，产品团队会认真查看每一条反馈。</p>
+          <div class="mt-4 grid gap-3 sm:grid-cols-2">
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-semibold text-[#444]">反馈类型</span>
+              <select v-model="feedbackType" class="h-10 w-full rounded-lg border border-[#e5e7eb] px-3 text-sm outline-none focus:border-orange-400">
+                <option value="suggestion">功能建议</option>
+                <option value="bug">问题报告</option>
+                <option value="billing">会员/收费</option>
+                <option value="other">其他</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-1.5 block text-sm font-semibold text-[#444]">联系方式（选填）</span>
+              <input v-model="feedbackContact" type="text" maxlength="64" class="h-10 w-full rounded-lg border border-[#e5e7eb] px-3 text-sm outline-none focus:border-orange-400" placeholder="手机号，便于回复" />
+            </label>
+          </div>
+          <label class="mt-3 block">
+            <span class="mb-1.5 block text-sm font-semibold text-[#444]">反馈内容</span>
+            <textarea v-model="feedbackContent" rows="4" maxlength="2000" class="w-full rounded-lg border border-[#e5e7eb] p-3 text-sm outline-none focus:border-orange-400" placeholder="请描述你的问题或建议（至少 5 个字）" />
+          </label>
+          <div class="mt-3 flex items-center gap-3">
+            <button
+              type="button"
+              class="inline-flex h-10 items-center rounded-full bg-[#ff5c00] px-6 text-sm font-bold text-white transition hover:bg-[#e84e00] disabled:opacity-60"
+              :disabled="feedbackSubmitting"
+              @click="submitFeedback"
+            >
+              {{ feedbackSubmitting ? '提交中…' : '提交反馈' }}
+            </button>
+            <span v-if="feedbackMessage" class="text-sm" :class="feedbackMessage.includes('感谢') ? 'text-emerald-600' : 'text-rose-500'">{{ feedbackMessage }}</span>
+          </div>
         </section>
       </div>
     </div>
