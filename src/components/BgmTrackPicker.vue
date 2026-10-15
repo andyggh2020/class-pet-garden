@@ -48,7 +48,7 @@ onUnmounted(() => {
       data-testid="bgm-mute-button"
       @click.stop="togglePicker"
     >
-      <span class="material-symbols-rounded text-[20px]">{{ isMuted ? 'volume_off' : 'volume_up' }}</span>
+      <span class="material-symbols-rounded text-[20px]">{{ isMuted ? 'heart_minus' : 'favorite' }}</span>
     </button>
 
     <div
@@ -70,7 +70,7 @@ onUnmounted(() => {
           data-testid="bgm-mute-toggle"
           @click="toggleMute"
         >
-          <span class="material-symbols-rounded text-[20px]">{{ isMuted ? 'volume_off' : 'volume_up' }}</span>
+          <span class="material-symbols-rounded text-[20px]">{{ isMuted ? 'heart_minus' : 'favorite' }}</span>
         </button>
       </div>
       <ul class="max-h-56 overflow-auto py-1">
@@ -86,7 +86,7 @@ onUnmounted(() => {
               class="material-symbols-rounded text-[18px]"
               :class="index === currentTrackIndex ? 'text-[#ff7a1a]' : 'text-[#ccc]'"
             >
-              {{ index === currentTrackIndex ? 'play_circle' : 'music_note' }}
+              {{ index === currentTrackIndex ? 'check' : 'stars' }}
             </span>
             <span class="min-w-0 flex-1 truncate">{{ track.title }}</span>
           </button>
