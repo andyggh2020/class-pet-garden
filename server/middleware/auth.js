@@ -18,6 +18,12 @@ export async function authMiddleware(req, res, next) {
       return res.status(401).json({ error: '未登录或登录已过期' })
     }
 
+    // token 签名有效但用户已不存在（换库/清库后旧 token），统一按登录过期处理
+    const user = await db.prepare('SELECT id FROM users WHERE id = ?').get(payload.userId)
+    if (!user) {
+      return res.status(401).json({ error: '登录已过期，请重新登录' })
+    }
+
     req.userId = payload.userId
     next()
   } catch (error) {

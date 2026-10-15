@@ -177,7 +177,8 @@ async function openTeacherProfile() {
     teacherProfile.value = res.data
   } catch (error) {
     console.error('加载教师信息失败:', error)
-    toast.error('加载账号信息失败')
+    const status = (error as { response?: { status?: number } })?.response?.status
+    toast.error(status === 401 || status === 404 ? '登录已过期，请重新登录' : '加载账号信息失败')
     showTeacherProfile.value = false
   } finally {
     teacherProfileLoading.value = false
