@@ -154,6 +154,39 @@ function deleteRule(id: string) {
 }
 
 onMounted(loadRules)
+
+// ===== 常用表扬语模板：点击即预填“新增规则”表单，3 秒建成常用规则 =====
+const PRAISE_TEMPLATES: Array<{ name: string; category: string; points: number }> = [
+  { name: '发言积极', category: '学习', points: 2 },
+  { name: '作业认真完成', category: '学习', points: 2 },
+  { name: '测验进步明显', category: '学习', points: 2 },
+  { name: '乐于帮助同学', category: '行为', points: 2 },
+  { name: '遵守课堂纪律', category: '行为', points: 1 },
+  { name: '主动打扫卫生', category: '健康', points: 2 },
+  { name: '坚持运动锻炼', category: '健康', points: 1 },
+  { name: '团结同学', category: '其他', points: 2 },
+  { name: '勇于展示自我', category: '其他', points: 2 },
+  { name: '上课认真听讲', category: '学习', points: 1 },
+  { name: '书写工整', category: '学习', points: 1 },
+  { name: '课前准备充分', category: '行为', points: 1 },
+  { name: '文明礼貌', category: '行为', points: 1 },
+  { name: '按时到校', category: '行为', points: 1 },
+  { name: '眼保健操认真', category: '健康', points: 1 },
+  { name: '保持座位整洁', category: '健康', points: 1 },
+  { name: '积极参与活动', category: '其他', points: 1 },
+  { name: '为班级争光', category: '其他', points: 3 },
+  { name: '未完成作业', category: '学习', points: -2 },
+  { name: '上课讲话走神', category: '行为', points: -1 },
+]
+
+const templateExists = (name: string) => rules.value.some(rule => rule.name === name)
+
+function applyPraiseTemplate(template: { name: string; category: string; points: number }) {
+  newRuleName.value = template.name
+  newRuleCategory.value = template.category
+  newRulePoints.value = template.points
+  showAddModal.value = true
+}
 </script>
 
 <template>
@@ -198,6 +231,31 @@ onMounted(loadRules)
               <span class="text-sm font-bold text-[#4d3527]">{{ cat }}</span>
             </div>
           </div>
+        </div>
+      </section>
+
+      <!-- 常用表扬语模板 -->
+      <section class="mt-6 rounded-[1.75rem] border border-[#f0e5da] bg-white p-4 shadow-[0_10px_30px_rgba(101,71,45,0.04)] sm:p-5">
+        <div class="flex flex-col gap-1">
+          <h2 class="font-serif text-xl font-bold text-[#422d20]">常用表扬语</h2>
+          <p class="text-sm text-[#9a735d]">点击任意短语，即可预填「新增规则」表单；保存后立即可在课堂快速评价中使用。</p>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button
+            v-for="template in PRAISE_TEMPLATES"
+            :key="template.name"
+            type="button"
+            class="inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-40"
+            :class="template.points > 0
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+              : 'border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-100'"
+            :disabled="templateExists(template.name)"
+            @click="applyPraiseTemplate(template)"
+          >
+            <span>{{ template.points > 0 ? '+' : '' }}{{ template.points }}</span>
+            {{ template.name }}
+            <span v-if="templateExists(template.name)" class="material-symbols-rounded text-[14px]">check</span>
+          </button>
         </div>
       </section>
 

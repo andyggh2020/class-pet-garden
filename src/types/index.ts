@@ -5,6 +5,8 @@ export interface Class {
   created_at: number
   updated_at?: number
   user_id?: string
+  share_token?: string | null
+  archived?: boolean
 }
 
 // 学生

@@ -113,4 +113,81 @@ router.delete('/:id', authMiddleware, async (req, res) => {
   res.json({ success: true })
 })
 
+// ===== 班级分享（班级码） =====
+// 获取或生成班级分享密钥
+router.get('/:id/share-token', authMiddleware, async (req, res) => {
+  const classInfo = await db.prepare('SELECT id, user_id, share_token FROM classes WHERE id = ?').get(req.params.id)
+  if (!classInfo) {
+    return res.status(404).json({ error: '班级不存在' })
+  }
+  if (classInfo.user_id !== req.userId) {
+    return res.status(403).json({ error: '无权访问' })
+  }
+
+  let token = classInfo.share_token
+  if (!token) {
+    token = uuidv4().replace(/-/g, '')
+    await db.prepare('UPDATE classes SET share_token = ? WHERE id = ?').run(token, req.params.id)
+  }
+  res.json({ shareToken: token })
+})
+
+// 重置分享密钥（旧链接立即失效）
+router.post('/:id/share-token/reset', authMiddleware, async (req, res) => {
+  const classInfo = await db.prepare('SELECT id, user_id FROM classes WHERE id = ?').get(req.params.id)
+  if (!classInfo) {
+    return res.status(404).json({ error: '班级不存在' })
+  }
+  if (classInfo.user_id !== req.userId) {
+    return res.status(403).json({ error: '无权访问' })
+  }
+
+  const token = uuidv4().replace(/-/g, '')
+  await db.prepare('UPDATE classes SET share_token = ? WHERE id = ?').run(token, req.params.id)
+  res.json({ shareToken: token })
+})
+
+// ===== 学年管理 =====
+// 归档 / 恢复班级
+router.put('/:id/archive', authMiddleware, async (req, res) => {
+  const { archived } = req.body || {}
+  const classInfo = await db.prepare('SELECT id, user_id FROM classes WHERE id = ?').get(req.params.id)
+  if (!classInfo) {
+    return res.status(404).json({ error: '班级不存在' })
+  }
+  if (classInfo.user_id !== req.userId) {
+    return res.status(403).json({ error: '无权操作' })
+  }
+
+  await db.prepare('UPDATE classes SET archived = ?, updated_at = ? WHERE id = ?')
+    .run(archived ? 1 : 0, Date.now(), req.params.id)
+  res.json({ success: true, archived: Boolean(archived) })
+})
+
+// 复制班级到新学年（复制班级与学生名单，不带评价记录）
+router.post('/:id/copy', authMiddleware, async (req, res) => {
+  const source = await db.prepare('SELECT id, user_id, name FROM classes WHERE id = ?').get(req.params.id)
+  if (!source) {
+    return res.status(404).json({ error: '班级不存在' })
+  }
+  if (source.user_id !== req.userId) {
+    return res.status(403).json({ error: '无权操作' })
+  }
+
+  const now = Date.now()
+  const newId = uuidv4()
+  await db.prepare('INSERT INTO classes (id, user_id, name, created_at, updated_at, archived) VALUES (?, ?, ?, ?, ?, 0)')
+    .run(newId, req.userId, `${source.name}（新学年）`, now, now)
+
+  const students = await db.prepare('SELECT name, student_no FROM students WHERE class_id = ?').all(req.params.id)
+  for (const student of students) {
+    await db.prepare(`
+      INSERT INTO students (id, class_id, name, student_no, total_points, pet_level, pet_exp, created_at)
+      VALUES (?, ?, ?, ?, 0, 1, 0, ?)
+    `).run(uuidv4(), newId, student.name, student.student_no, now)
+  }
+
+  res.json({ success: true, class: { id: newId, name: `${source.name}（新学年）`, studentCount: students.length } })
+})
+
 export default router

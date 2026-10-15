@@ -118,6 +118,8 @@ export async function initDb() {
       name VARCHAR(255) NOT NULL,
       created_at BIGINT,
       updated_at BIGINT,
+      share_token VARCHAR(36) NULL,
+      archived TINYINT NOT NULL DEFAULT 0,
       INDEX idx_classes_user_id (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
@@ -263,6 +265,20 @@ export async function initDb() {
       ('rule_9', '坚持运动', 2, '健康', 0, 1704067200000),
       ('rule_10', '不讲卫生', -1, '健康', 0, 1704067200000)
   `)
+
+  // 列迁移：为已存在的 classes 表补充 share_token / archived 列
+  const classColumns = await pool.query(`
+    SELECT COLUMN_NAME AS name
+    FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'classes'
+  `)
+  const columnNames = classColumns[0].map(column => column.name)
+  if (!columnNames.includes('share_token')) {
+    await pool.query('ALTER TABLE classes ADD COLUMN share_token VARCHAR(36) NULL')
+  }
+  if (!columnNames.includes('archived')) {
+    await pool.query('ALTER TABLE classes ADD COLUMN archived TINYINT NOT NULL DEFAULT 0')
+  }
 }
 
 export { getPool as pool }
