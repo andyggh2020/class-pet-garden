@@ -19,15 +19,16 @@ const wechatPhone = ref('')
 const qrCodeUrl = ref('')
 const fallbackPhone = '136-0000-0000'
 
-// 功能亮点
-const features = [
-  { icon: 'bolt', title: '极速评价', desc: '轻点即可完成课堂反馈与行为记录，告别纸质表格，老师零负担。' },
-  { icon: 'pets', title: '成长宠物', desc: '每次进步都喂养专属小宠物，等级与进化看得见，孩子主动追着成长。' },
-  { icon: 'military_tech', title: '积分激励', desc: '积分兑换勋章与班级特权，把"要我学"变成"我要学"的正向循环。' },
-  { icon: 'emoji_events', title: '班级荣誉', desc: '个人努力汇成班级勋章，集体荣誉感拉满，班风自然向上。' },
-  { icon: 'view_list', title: '家长透明', desc: '成长相册与喂养记录实时同步，家校零距离，家长更放心。' },
-  { icon: 'stars', title: '轻量运营', desc: '免安装、免培训，一个班级码即可开课，人手一部手机就能用。' },
-]
+// Hero 主标题：每次进入随机抽一条（与原首页保持一致）
+const LANDING_HEADLINES = [
+  '孩子的专属宠物，言行驱动成长。',
+  '老师轻点评分，学生宠物同步成长。',
+  '一声表扬，一只宠物，一份看得见的成长。',
+] as const
+
+const landingHeadline = ref(
+  LANDING_HEADLINES[Math.floor(Math.random() * LANDING_HEADLINES.length)]!,
+)
 
 // 操作流程（三端）
 const flow = [
@@ -55,6 +56,10 @@ const faqs = [
 function goWorkbench() {
   router.push('/app')
 }
+function goDemo() {
+  // 进入演示班级：/app?demo=1 由工作台自动拉起演示模式
+  router.push('/app?demo=1')
+}
 function goLogin() {
   router.push('/login')
 }
@@ -81,7 +86,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-[#f5f7fa] text-[#422d20]">
+  <div class="min-h-screen bg-white text-[#1a1a1a]">
     <!-- 顶部导航 -->
     <header class="sticky top-0 z-30 border-b border-[#f0e6dc] bg-white/85 backdrop-blur">
       <div class="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
@@ -103,79 +108,73 @@ onMounted(async () => {
       </div>
     </header>
 
-    <!-- Hero -->
-    <section class="relative overflow-hidden">
-      <div class="mx-auto grid max-w-6xl items-center gap-10 px-4 py-16 md:grid-cols-2 md:py-24">
-        <div>
-          <span class="inline-flex items-center gap-1.5 rounded-full bg-[#fff3eb] px-3 py-1 text-xs font-semibold text-[#d97706]">
-            <span class="material-symbols-rounded text-[16px]">stars</span> 让每一次进步都被看见
-          </span>
-          <h1 class="mt-5 font-serif text-4xl font-bold leading-tight text-[#2b1d12] md:text-5xl">
-            用一只成长宠物<br />点燃孩子的学习动力
-          </h1>
-          <p class="mt-5 text-base leading-relaxed text-[#6b5544] md:text-lg">
-            老师 10 秒完成一次课堂评价，学生喂养专属宠物，家长实时看见成长。
-            把日常打卡变成孩子主动争取的「小期待」。
-          </p>
-          <div class="mt-8 flex flex-wrap items-center gap-3">
-            <button type="button" class="inline-flex h-12 items-center gap-2 rounded-full bg-[#ff5c00] px-7 text-base font-bold text-white shadow-md transition hover:bg-[#e84e00]" @click="goWorkbench">
-              免费创建班级
-              <span class="material-symbols-rounded text-[20px]">arrow_forward</span>
-            </button>
-            <a href="#flow" class="inline-flex h-12 items-center gap-2 rounded-full border border-[#e7d8c8] bg-white px-6 text-base font-semibold text-[#8a6b51] transition hover:border-[#d97706]" >
-              <span class="material-symbols-rounded text-[20px]">arrow_forward</span> 查看使用流程
-            </a>
-          </div>
-          <div class="mt-8 flex items-center gap-6 text-sm text-[#9a735d]">
-            <div><span class="font-serift text-2xl font-bold text-[#d97706]">0</span> 安装 · 开箱即用</div>
-            <div><span class="font-serif text-2xl font-bold text-[#d97706]">1</span> 个班级码开课</div>
-            <div><span class="font-serif text-2xl font-bold text-[#d97706]">30</span> 秒上手</div>
-          </div>
+    <!-- Hero（原首页样式保留） -->
+    <section class="flex items-center justify-center px-5 pt-16 pb-8 sm:px-8 sm:pb-10">
+      <div class="flex w-full max-w-[860px] flex-col items-center text-center">
+        <div class="flex h-[34px] items-center justify-center gap-2 rounded-full bg-[#fff3ec] px-4">
+          <span class="h-2 w-2 rounded-full bg-[#ff5c00]"></span>
+          <span class="font-brand text-sm font-bold text-[#ff5c00]">班级宠物园</span>
         </div>
-        <!-- 主视觉 -->
-        <div class="relative flex items-center justify-center">
-          <div class="absolute h-72 w-72 rounded-full bg-gradient-to-br from-[#ffe1c2] to-[#ffd0a8] blur-2xl opacity-70"></div>
-          <div class="relative flex h-80 w-80 flex-col items-center justify-center rounded-[2.5rem] bg-gradient-to-br from-[#fff7ef] to-[#fff0e0] shadow-xl ring-1 ring-[#f3e3d2]">
-            <span class="material-symbols-rounded text-[120px] leading-none text-[#ff7a18]">pets</span>
-            <p class="mt-2 font-serif text-xl font-bold text-[#b85e25]">成长，看得见</p>
-            <div class="mt-5 flex gap-3">
-              <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#ff5c00] shadow-sm"><span class="material-symbols-rounded">emoji_events</span></span>
-              <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#ff8a3d] shadow-sm"><span class="material-symbols-rounded">favorite</span></span>
-              <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-white text-[#ffa64d] shadow-sm"><span class="material-symbols-rounded">stars</span></span>
-            </div>
+        <h1 class="mt-[22px] max-w-[820px] font-serif text-5xl font-bold leading-[0.98] text-[#1a1a1a] sm:text-[68px]">{{ landingHeadline }}</h1>
+        <p class="mt-[22px] max-w-[660px] text-base leading-[1.45] text-[#666] sm:text-xl">老师快速加分，学生的宠物随习惯一起升级。</p>
+        <div class="mt-[22px] flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
+          <button type="button" class="font-brand h-12 rounded-full bg-[#ff5c00] px-8 text-[15px] font-bold text-white shadow-[0_16px_40px_rgba(0,0,0,0.07)] transition hover:bg-[#e95300]" @click="goDemo">进入演示班级</button>
+          <router-link to="/register" class="font-brand inline-flex h-12 items-center rounded-full border border-[#ff5c00] bg-white px-8 text-[15px] font-bold text-[#ff5c00] transition hover:bg-[#fff3ec]">我是老师，创建新班级</router-link>
+        </div>
+        <div class="mt-[22px] flex h-[86px] w-full max-w-[420px] items-center justify-center gap-[18px] rounded-xl border border-[#f3f4f6] bg-white px-[18px] py-[14px] text-left shadow-[0_16px_40px_rgba(0,0,0,0.07)]">
+          <div class="relative h-[58px] w-[58px] shrink-0 rounded-xl bg-[#fff3ec]">
+            <span class="absolute left-[15px] top-[14px] h-7 w-7 rounded-full bg-[#ff8533]"></span>
+            <span class="absolute left-3 top-[10px] h-2.5 w-2.5 rounded-full bg-[#ff8533]"></span>
+            <span class="absolute right-3 top-[10px] h-2.5 w-2.5 rounded-full bg-[#ff8533]"></span>
+          </div>
+          <div class="min-w-0">
+            <p class="font-brand text-sm font-bold text-[#1a1a1a]">评价一次，成长一点</p>
+            <p class="mt-1 text-sm leading-5 text-[#888]">积分、等级、徽章都围绕学生的日常表现。</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 功能亮点 -->
-    <section id="features" class="mx-auto max-w-6xl px-4 py-16">
+    <!-- 产品截图（原首页样式保留） -->
+    <section class="flex flex-col items-center justify-center gap-[18px] px-5 py-10 sm:h-[700px] sm:px-8 lg:h-auto lg:min-h-[820px] lg:gap-6 lg:py-14">
       <div class="text-center">
-        <h2 class="font-serif text-3xl font-bold text-[#2b1d12]">为什么老师和家长都选它</h2>
-        <p class="mt-3 text-[#6b5544]">把激励机制做进每一次课堂，让成长自然发生</p>
+        <p class="font-brand text-sm leading-5 font-semibold text-[#ff5c00]">产品截图</p>
+        <h2 class="mt-4 font-serif text-3xl font-bold leading-[1.05] text-[#1a1a1a] sm:text-[34px]">把喂养、成长与班级记录放在同一屏。</h2>
       </div>
-      <div class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <article v-for="f in features" :key="f.title" class="rounded-2xl border border-[#f0e6dc] bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:shadow-md">
-          <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff3eb] text-[#ff5c00]">
-            <span class="material-symbols-rounded text-[24px]">{{ f.icon }}</span>
-          </div>
-          <h3 class="mt-4 text-lg font-bold">{{ f.title }}</h3>
-          <p class="mt-2 text-sm leading-relaxed text-[#6b5544]">{{ f.desc }}</p>
-        </article>
+      <div class="flex w-full max-w-[1040px] items-center justify-center rounded-xl border border-[#f3f4f6] bg-white p-3 shadow-[0_16px_40px_rgba(0,0,0,0.07)] sm:h-[590px] sm:p-4 lg:max-w-[1180px] lg:h-[660px] lg:p-5 xl:max-w-[1280px] xl:h-[720px]">
+        <img src="/class-pet-garden-product.png" alt="班级宠物园产品截图" class="w-full rounded-lg sm:h-full sm:object-contain" />
+      </div>
+    </section>
+
+    <!-- 功能亮点（原首页样式保留） -->
+    <section id="features" class="relative flex min-h-[230px] flex-col items-center justify-center gap-5 px-5 py-12 sm:px-8">
+      <span class="absolute left-[18%] top-[42px] h-[7px] w-[7px] rounded-full bg-[#ff8533]"></span>
+      <span class="absolute right-[18%] top-[40px] text-base text-[#ff5c00]">✦</span>
+      <span class="absolute bottom-[34px] left-[24%] h-1 w-[18px] rotate-[-18deg] rounded-full bg-[#ff5c00]"></span>
+      <div class="text-center">
+        <p class="font-brand text-sm leading-5 font-semibold text-[#ff5c00]">CLASS PET GARDEN</p>
+        <h2 class="mt-4 font-serif text-3xl font-bold leading-[1.05] text-[#1a1a1a] sm:text-[34px]">让班级反馈，变成孩子看得见的成长</h2>
+      </div>
+      <div class="flex w-full max-w-[900px] flex-col gap-6 md:flex-row md:items-center md:gap-6">
+        <article class="flex flex-1 items-center gap-3"><div class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-[#fff3eb] text-[#ff5c00]"><span class="material-symbols-rounded text-[20px]">rate_review</span></div><div><h3 class="text-[17px] font-[650]">快速评价</h3><p class="font-brand mt-1 text-sm leading-[1.25] text-[#666]">老师轻点完成课堂反馈</p></div></article>
+        <div class="hidden h-12 w-px bg-[#f3f4f6] md:block"></div>
+        <article class="flex flex-1 items-center gap-3"><div class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-[#fff3eb] text-[#ff5c00]"><span class="material-symbols-rounded text-[20px]">pets</span></div><div><h3 class="text-[17px] font-[650]">宠物成长</h3><p class="font-brand mt-1 text-sm leading-[1.25] text-[#666]">每次进步都喂养专属小宠物</p></div></article>
+        <div class="hidden h-12 w-px bg-[#f3f4f6] md:block"></div>
+        <article class="flex flex-1 items-center gap-3"><div class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-[#fff3eb] text-[#ff5c00]"><span class="material-symbols-rounded text-[20px]">emoji_events</span></div><div><h3 class="text-[17px] font-[650]">班级荣誉</h3><p class="font-brand mt-1 text-sm leading-[1.25] text-[#666]">把个人努力汇成班级勋章</p></div></article>
       </div>
     </section>
 
     <!-- 使用流程 -->
-    <section id="flow" class="bg-white py-16">
+    <section id="flow" class="bg-[#faf6f1] py-16">
       <div class="mx-auto max-w-6xl px-4">
         <div class="text-center">
           <h2 class="font-serif text-3xl font-bold text-[#2b1d12]">三步开启成长之旅</h2>
           <p class="mt-3 text-[#6b5544]">老师、课堂、家长，各司其职又彼此连接</p>
         </div>
         <div class="mt-12 grid gap-8 md:grid-cols-3">
-          <div v-for="(it, i) in flow" :key="it.step" class="relative rounded-2xl border border-[#f0e6dc] bg-[#faf6f1] p-6">
+          <div v-for="(it, i) in flow" :key="it.step" class="relative rounded-2xl border border-[#f0e6dc] bg-white p-6">
             <span class="absolute -top-4 left-6 flex h-9 w-9 items-center justify-center rounded-full bg-[#ff5c00] text-sm font-bold text-white shadow">{{ it.step }}</span>
-            <div class="mt-4 flex h-12 w-12 items-center justify-center rounded-xl bg-white text-[#ff7a18] shadow-sm"><span class="material-symbols-rounded text-[24px]">{{ it.icon }}</span></div>
+            <div class="mt-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff7ef] text-[#ff7a18]"><span class="material-symbols-rounded text-[24px]">{{ it.icon }}</span></div>
             <p class="mt-3 text-xs font-semibold uppercase tracking-wider text-[#d97706]">{{ it.who }}</p>
             <h3 class="text-lg font-bold">{{ it.title }}</h3>
             <p class="mt-2 text-sm leading-relaxed text-[#6b5544]">{{ it.desc }}</p>
@@ -213,11 +212,11 @@ onMounted(async () => {
     </section>
 
     <!-- FAQ -->
-    <section id="faq" class="bg-white py-16">
+    <section id="faq" class="bg-[#faf6f1] py-16">
       <div class="mx-auto max-w-3xl px-4">
         <h2 class="text-center font-serif text-3xl font-bold text-[#2b1d12]">常见问题</h2>
         <div class="mt-10 space-y-4">
-          <details v-for="(f, i) in faqs" :key="i" class="group rounded-2xl border border-[#f0e6dc] bg-[#faf6f1] p-5 [&_summary]:cursor-pointer">
+          <details v-for="(f, i) in faqs" :key="i" class="group rounded-2xl border border-[#f0e6dc] bg-white p-5 [&_summary]:cursor-pointer">
             <summary class="flex items-center justify-between font-semibold text-[#422d20]">
               <span>{{ f.q }}</span>
               <span class="material-symbols-rounded text-[#d97706] transition group-open:rotate-180">expand_more</span>
@@ -255,15 +254,18 @@ onMounted(async () => {
       </div>
     </section>
 
-    <!-- 底部 -->
-    <footer class="border-t border-[#f0e6dc] bg-white">
-      <div class="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-[#9a735d] md:flex-row">
-        <p>© 2026 {{ brandName }} · 让成长被看见</p>
-        <div class="flex items-center gap-5">
-          <a href="#" class="hover:text-[#d97706]">隐私政策</a>
-          <a href="#" class="hover:text-[#d97706]">服务条款</a>
-          <span>备案号：{{ beianNo }}</span>
+    <!-- 底部 CTA（原首页样式保留）+ 备案 -->
+    <footer class="bg-[#f7f8fa] px-5 py-14 text-center sm:px-8">
+      <div class="flex flex-col items-center gap-[14px]">
+        <h2 class="font-serif text-3xl font-bold text-[#1a1a1a] sm:text-[34px]">先从一个班级开始。</h2>
+        <div class="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-base">
+          <span class="text-[#666]">导入学生，设置评价规则，让成长被看见。</span>
+          <button type="button" class="font-brand font-bold text-[#ff5c00] underline-offset-2 transition hover:text-[#e95300] hover:underline" @click="goDemo">进入演示班级</button>
+          <span class="text-[#ccc]">·</span>
+          <router-link to="/register" class="font-brand font-bold text-[#ff5c00] underline-offset-2 transition hover:text-[#e95300] hover:underline">我是老师，创建新班级</router-link>
         </div>
+        <p class="font-brand text-sm text-[#888]">© 2026 {{ brandName }}。保留所有权利。</p>
+        <p class="text-xs text-[#aaa]">{{ beianNo }}</p>
       </div>
     </footer>
   </div>
