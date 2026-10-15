@@ -195,6 +195,32 @@ export interface AdminMemberItem {
   studentCount: number
 }
 
+export interface AdminMemberStudent {
+  id: string
+  name: string
+  studentNo: string | null
+  totalPoints: number
+  petType: string | null
+  petLevel: number
+}
+
+export interface AdminMemberDetailClass {
+  id: string
+  name: string
+  createdAt: number
+  studentCount: number
+  students: AdminMemberStudent[]
+}
+
+export interface AdminMemberDetail {
+  user: {
+    id: string
+    username: string
+    createdAt: number
+  }
+  classes: AdminMemberDetailClass[]
+}
+
 export interface AdminMemberOverview {
   members: AdminMemberItem[]
   summary: {

@@ -5,7 +5,8 @@ import AppShell from '@/components/AppShell.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
 import { useToast } from '@/composables/useToast'
-import type { AdminClassOverview, AdminMemberItem, AdminMemberOverview, ClassVipItem, PaymentInfoAdmin } from '@/types'
+import { getPetType } from '@/data/pets'
+import type { AdminClassOverview, AdminMemberDetail, AdminMemberItem, AdminMemberOverview, ClassVipItem, PaymentInfoAdmin } from '@/types'
 
 const router = useRouter()
 const { api, isAdmin } = useAuth()
@@ -26,6 +27,12 @@ const qrInputRef = ref<HTMLInputElement | null>(null)
 // 站点信息（备案号，展示在销售页页脚）
 const siteIcp = ref('')
 const siteSaving = ref(false)
+
+// 会员数据详情（班级 + 学生）
+const showMemberDetail = ref(false)
+const memberDetailLoading = ref(false)
+const memberDetail = ref<AdminMemberDetail | null>(null)
+const expandedClassId = ref('')
 
 const qrPreviewSrc = computed(() => paymentQrUrl.value.trim())
 
@@ -389,6 +396,27 @@ async function saveVipAuthorization(item: ClassVipItem) {
   }
 }
 
+async function openMemberDetail(item: AdminMemberItem) {
+  showMemberDetail.value = true
+  memberDetailLoading.value = true
+  memberDetail.value = null
+  expandedClassId.value = ''
+  try {
+    const res = await api.get<AdminMemberDetail>(`/admin/users/${item.id}/detail`)
+    memberDetail.value = res.data
+  } catch (error) {
+    console.error('加载会员数据失败:', error)
+    toast.error('加载会员数据失败')
+    showMemberDetail.value = false
+  } finally {
+    memberDetailLoading.value = false
+  }
+}
+
+function toggleClassExpand(classId: string) {
+  expandedClassId.value = expandedClassId.value === classId ? '' : classId
+}
+
 function openResetPasswordModal(item: AdminMemberItem) {
   resettingMember.value = item
   newPassword.value = ''
@@ -727,6 +755,14 @@ onMounted(() => {
                   <button
                     type="button"
                     class="inline-flex h-9 items-center gap-1 rounded-xl border border-[#f0e5da] px-3 text-sm font-semibold text-[#765f50] transition hover:bg-[#fff7f1]"
+                    @click="openMemberDetail(item)"
+                  >
+                    <span class="material-symbols-rounded text-[16px] leading-none">visibility</span>
+                    查看数据
+                  </button>
+                  <button
+                    type="button"
+                    class="inline-flex h-9 items-center gap-1 rounded-xl border border-[#f0e5da] px-3 text-sm font-semibold text-[#765f50] transition hover:bg-[#fff7f1]"
                     @click="openResetPasswordModal(item)"
                   >
                     <span class="material-symbols-rounded text-[16px] leading-none">lock_reset</span>
@@ -910,6 +946,83 @@ onMounted(() => {
             >
               {{ saving ? '保存中…' : '确认' }}
             </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
+    <Transition>
+      <div v-if="showMemberDetail" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/30 p-4">
+        <div class="flex max-h-[85vh] w-full max-w-2xl flex-col rounded-3xl bg-white p-6 shadow-2xl">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-sm font-bold tracking-wider text-orange-600">MEMBER DATA</p>
+              <h2 class="mt-1 font-serif text-2xl font-bold">{{ memberDetail?.user.username || '会员数据' }}</h2>
+              <p v-if="memberDetail" class="mt-1 text-sm text-[#9a735d]">
+                注册于 {{ formatDate(memberDetail.user.createdAt) }} · {{ memberDetail.classes.length }} 个班级 ·
+                {{ memberDetail.classes.reduce((sum, c) => sum + c.studentCount, 0) }} 名学生
+              </p>
+            </div>
+            <button type="button" class="rounded-xl px-3 py-1.5 text-sm text-[#765f50] hover:bg-[#fff7f1]" @click="showMemberDetail = false">
+              关闭
+            </button>
+          </div>
+
+          <div v-if="memberDetailLoading" class="py-14 text-center text-sm text-[#a1836d]">加载中…</div>
+
+          <div v-else-if="memberDetail" class="mt-4 min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+            <div v-if="!memberDetail.classes.length" class="rounded-2xl bg-[#fff8f2] px-5 py-10 text-center text-sm text-[#a1836d]">
+              该教师暂未创建班级
+            </div>
+            <div
+              v-for="cls in memberDetail.classes"
+              :key="cls.id"
+              class="overflow-hidden rounded-2xl border border-[#f3ece4]"
+            >
+              <button
+                type="button"
+                class="flex w-full items-center justify-between gap-3 bg-[#fffdfb] px-4 py-3 text-left transition hover:bg-[#fff8f2]"
+                @click="toggleClassExpand(cls.id)"
+              >
+                <div class="min-w-0">
+                  <p class="truncate text-sm font-bold text-[#422d20]">{{ cls.name }}</p>
+                  <p class="mt-0.5 text-xs text-[#9a735d]">
+                    创建于 {{ formatDate(cls.createdAt) }} · {{ cls.studentCount }} 名学生
+                  </p>
+                </div>
+                <span class="material-symbols-rounded shrink-0 text-[20px] text-[#9a735d]">
+                  {{ expandedClassId === cls.id ? 'keyboard_arrow_up' : 'keyboard_arrow_down' }}
+                </span>
+              </button>
+
+              <div v-if="expandedClassId === cls.id" class="border-t border-[#f3ece4] bg-white">
+                <div v-if="!cls.students.length" class="px-4 py-6 text-center text-sm text-[#a1836d]">
+                  该班级暂无学生
+                </div>
+                <table v-else class="w-full text-left text-sm">
+                  <thead>
+                    <tr class="bg-[#fff8f2] text-xs text-[#9a735d]">
+                      <th class="px-4 py-2 font-semibold">姓名</th>
+                      <th class="px-2 py-2 font-semibold">学号</th>
+                      <th class="px-2 py-2 font-semibold">积分</th>
+                      <th class="px-2 py-2 font-semibold">宠物</th>
+                      <th class="px-4 py-2 text-right font-semibold">等级</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="stu in cls.students" :key="stu.id" class="border-t border-[#f8f1ea]">
+                      <td class="px-4 py-2.5 font-semibold text-[#422d20]">{{ stu.name }}</td>
+                      <td class="px-2 py-2.5 text-[#9a735d]">{{ stu.studentNo || '—' }}</td>
+                      <td class="px-2 py-2.5 font-bold text-[#ea580c]">{{ stu.totalPoints }}</td>
+                      <td class="px-2 py-2.5 text-[#765f50]">
+                        {{ stu.petType ? (getPetType(stu.petType)?.name || stu.petType) : '未领养' }}
+                      </td>
+                      <td class="px-4 py-2.5 text-right text-[#765f50]">{{ stu.petType ? `Lv.${stu.petLevel}` : '—' }}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>

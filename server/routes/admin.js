@@ -199,6 +199,50 @@ router.get('/users', async (req, res) => {
   })
 })
 
+router.get('/users/:id/detail', async (req, res) => {
+  const user = await db.prepare('SELECT id, username, is_guest, created_at FROM users WHERE id = ?').get(req.params.id)
+  if (!user) {
+    return res.status(404).json({ error: '用户不存在' })
+  }
+
+  const classes = await db.prepare(`
+    SELECT id, name, created_at
+    FROM classes
+    WHERE user_id = ?
+    ORDER BY created_at DESC
+  `).all(user.id)
+
+  const result = []
+  for (const cls of classes) {
+    const students = await db.prepare(`
+      SELECT id, name, student_no, total_points, pet_type, pet_level
+      FROM students
+      WHERE class_id = ?
+      ORDER BY total_points DESC, pet_level DESC
+    `).all(cls.id)
+
+    result.push({
+      id: cls.id,
+      name: cls.name,
+      createdAt: cls.created_at,
+      studentCount: students.length,
+      students: students.map(s => ({
+        id: s.id,
+        name: s.name,
+        studentNo: s.student_no,
+        totalPoints: s.total_points,
+        petType: s.pet_type,
+        petLevel: s.pet_level,
+      })),
+    })
+  }
+
+  res.json({
+    user: { id: user.id, username: user.username, createdAt: user.created_at },
+    classes: result,
+  })
+})
+
 router.put('/users/:id/password', async (req, res) => {
   const { password } = req.body
   const trimmedPassword = String(password || '')
