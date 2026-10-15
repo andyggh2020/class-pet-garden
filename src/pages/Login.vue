@@ -68,7 +68,7 @@ function guestContinue() {
 
     <div class="relative mx-auto flex min-h-screen max-w-6xl flex-col lg:flex-row">
       <section class="hidden flex-1 flex-col justify-center px-6 py-10 sm:px-10 lg:flex lg:px-12 lg:py-16">
-        <div class="flex items-center gap-3.5">
+        <router-link to="/" class="flex items-center gap-3.5 transition hover:opacity-80" title="回到首页">
           <span class="flex h-[52px] w-[52px] items-center justify-center rounded-2xl bg-[#ffe7c8] shadow-sm">
             <span class="material-symbols-rounded text-[28px] text-[#d97706]">pets</span>
           </span>
@@ -76,7 +76,7 @@ function guestContinue() {
             <p class="text-sm font-bold text-[#ff5c00]">班级宠物园</p>
             <p class="text-sm text-[#9a5a2b]">CLASS PET GARDEN</p>
           </div>
-        </div>
+        </router-link>
 
         <h1 class="mt-7 font-serif text-4xl font-bold leading-tight text-[#1a1a1a] sm:text-5xl">欢迎回到宠物园</h1>
         <p class="mt-4 max-w-md text-base leading-7 text-[#666]">
@@ -166,6 +166,13 @@ function guestContinue() {
             class="mt-2 block w-full text-center text-sm text-[#888] transition hover:text-[#ff5c00]"
           >
             📖 查看操作说明（新窗口）
+          </router-link>
+
+          <router-link
+            to="/"
+            class="mt-2 block w-full text-center text-sm text-[#888] transition hover:text-[#ff5c00]"
+          >
+            ← 回到首页
           </router-link>
         </div>
       </section>
