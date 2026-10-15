@@ -32,11 +32,22 @@ const landingHeadline = ref(
   LANDING_HEADLINES[Math.floor(Math.random() * LANDING_HEADLINES.length)]!,
 )
 
-// 操作流程（三端）
+// 功能亮点
+const features = [
+  { icon: 'bolt', title: '快速评价', desc: '课堂表现轻点加减分，预设规则一键套用，不打断讲课节奏。' },
+  { icon: 'pets', title: '宠物成长', desc: '每次进步都喂养专属小宠物，升级、进化，直到毕业收获徽章。' },
+  { icon: 'military_tech', title: '班级荣誉墙', desc: '把个人努力汇成班级总积分与排行榜，凝聚集体荣誉感。' },
+  { icon: 'assignment', title: '班级任务', desc: '布置小组任务、批量完成统计，课堂管理井井有条。' },
+  { icon: 'person', title: '家长见证', desc: '班级码分享到家长群，扫码即看孩子成长，零门槛参与。' },
+  { icon: 'save', title: '数据备份', desc: '班级数据随时导出备份，换设备、跨浏览器都不丢失。' },
+]
+
+// 操作流程（四步）
 const flow = [
-  { step: '01', icon: 'school', who: '老师', title: '创建班级', desc: '生成班级码，一键导入学生名单，30 秒开课。' },
-  { step: '02', icon: 'rate_review', who: '课堂', title: '实时评价', desc: '课堂表现随手记录，学生喂养宠物、积累积分。' },
-  { step: '03', icon: 'person', who: '家长', title: '见证成长', desc: '扫码加入，实时看见孩子成长，按需开通会员。' },
+  { step: '01', icon: 'school', who: '老师', title: '创建班级', desc: '生成专属班级码，30 秒开课。', points: ['粘贴名单批量导入学生', '预设规则或自定义加减分'] },
+  { step: '02', icon: 'rate_review', who: '课堂', title: '实时评价', desc: '课堂表现随手记录，宠物同步成长。', points: ['快速评价模式轻点加减分', '学生积分与宠物实时变化'] },
+  { step: '03', icon: 'person', who: '家长', title: '见证成长', desc: '扫码即可查看，无需注册下载。', points: ['宠物成长与喂养记录', '评价时间线实时同步'] },
+  { step: '04', icon: 'workspace_premium', who: '进阶', title: '按需开通', desc: '需要更多能力时再升级。', points: ['新班级自动赠送 1 个月', '扫码支付后管理员授权'] },
 ]
 
 // 套餐（价格以工作台内实际方案为准）
@@ -153,6 +164,11 @@ onMounted(async () => {
           <button type="button" class="font-brand h-12 rounded-full bg-[#ff5c00] px-8 text-[15px] font-bold text-white shadow-[0_16px_40px_rgba(0,0,0,0.07)] transition hover:bg-[#e95300]" @click="goDemo">进入演示班级</button>
           <button type="button" class="font-brand inline-flex h-12 items-center rounded-full border border-[#ff5c00] bg-white px-8 text-[15px] font-bold text-[#ff5c00] transition hover:bg-[#fff3ec]" @click="goCreateClass">我是老师，创建新班级</button>
         </div>
+        <div class="mt-[22px] flex flex-wrap items-center justify-center gap-2">
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-[#f3ece4] bg-white px-3.5 py-1.5 text-sm font-semibold text-[#765f50] shadow-sm"><span class="material-symbols-rounded text-[16px] text-[#ff5c00]">workspace_premium</span>新班级赠送 1 个月</span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-[#f3ece4] bg-white px-3.5 py-1.5 text-sm font-semibold text-[#765f50] shadow-sm"><span class="material-symbols-rounded text-[16px] text-[#ff5c00]">touch_app</span>免安装 即点即用</span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-[#f3ece4] bg-white px-3.5 py-1.5 text-sm font-semibold text-[#765f50] shadow-sm"><span class="material-symbols-rounded text-[16px] text-[#ff5c00]">save</span>数据随时备份</span>
+        </div>
         <div class="mt-[22px] flex h-[86px] w-full max-w-[420px] items-center justify-center gap-[18px] rounded-xl border border-[#f3f4f6] bg-white px-[18px] py-[14px] text-left shadow-[0_16px_40px_rgba(0,0,0,0.07)]">
           <div class="relative h-[58px] w-[58px] shrink-0 rounded-xl bg-[#fff3ec]">
             <span class="absolute left-[15px] top-[14px] h-7 w-7 rounded-full bg-[#ff8533]"></span>
@@ -178,21 +194,30 @@ onMounted(async () => {
       </div>
     </section>
 
-    <!-- 功能亮点（原首页样式保留） -->
-    <section id="features" class="relative flex min-h-[230px] flex-col items-center justify-center gap-5 px-5 py-12 sm:px-8">
+    <!-- 功能亮点 -->
+    <section id="features" class="relative bg-white py-16 sm:py-20">
       <span class="absolute left-[18%] top-[42px] h-[7px] w-[7px] rounded-full bg-[#ff8533]"></span>
       <span class="absolute right-[18%] top-[40px] text-base text-[#ff5c00]">✦</span>
       <span class="absolute bottom-[34px] left-[24%] h-1 w-[18px] rotate-[-18deg] rounded-full bg-[#ff5c00]"></span>
-      <div class="text-center">
-        <p class="font-brand text-sm leading-5 font-semibold text-[#ff5c00]">CLASS PET GARDEN</p>
-        <h2 class="mt-4 font-serif text-3xl font-bold leading-[1.05] text-[#1a1a1a] sm:text-[34px]">让班级反馈，变成孩子看得见的成长</h2>
-      </div>
-      <div class="flex w-full max-w-[900px] flex-col gap-6 md:flex-row md:items-center md:gap-6">
-        <article class="flex flex-1 items-center gap-3"><div class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-[#fff3eb] text-[#ff5c00]"><span class="material-symbols-rounded text-[20px]">rate_review</span></div><div><h3 class="text-[17px] font-[650]">快速评价</h3><p class="font-brand mt-1 text-sm leading-[1.25] text-[#666]">老师轻点完成课堂反馈</p></div></article>
-        <div class="hidden h-12 w-px bg-[#f3f4f6] md:block"></div>
-        <article class="flex flex-1 items-center gap-3"><div class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-[#fff3eb] text-[#ff5c00]"><span class="material-symbols-rounded text-[20px]">pets</span></div><div><h3 class="text-[17px] font-[650]">宠物成长</h3><p class="font-brand mt-1 text-sm leading-[1.25] text-[#666]">每次进步都喂养专属小宠物</p></div></article>
-        <div class="hidden h-12 w-px bg-[#f3f4f6] md:block"></div>
-        <article class="flex flex-1 items-center gap-3"><div class="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-full bg-[#fff3eb] text-[#ff5c00]"><span class="material-symbols-rounded text-[20px]">emoji_events</span></div><div><h3 class="text-[17px] font-[650]">班级荣誉</h3><p class="font-brand mt-1 text-sm leading-[1.25] text-[#666]">把个人努力汇成班级勋章</p></div></article>
+      <div class="mx-auto max-w-6xl px-4">
+        <div class="text-center">
+          <p class="font-brand text-sm font-semibold tracking-[0.2em] text-[#ff5c00]">FEATURES</p>
+          <h2 class="mt-4 font-serif text-3xl font-bold leading-[1.05] text-[#1a1a1a] sm:text-[38px]">让班级反馈，变成孩子看得见的成长</h2>
+          <p class="mt-3 text-[#6b5544]">从课堂评价到家长见证，每个环节都为孩子而设计</p>
+        </div>
+        <div class="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          <article
+            v-for="f in features"
+            :key="f.title"
+            class="group rounded-3xl border border-[#f0e6dc] bg-white p-6 shadow-[0_8px_24px_rgba(101,71,45,0.04)] transition hover:-translate-y-1 hover:border-[#ffd9bd] hover:shadow-[0_16px_40px_rgba(255,122,24,0.12)]"
+          >
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#fff7ef] text-[#ff7a18] transition group-hover:bg-[#ff7a18] group-hover:text-white">
+              <span class="material-symbols-rounded text-[24px]">{{ f.icon }}</span>
+            </div>
+            <h3 class="mt-4 text-lg font-bold text-[#2b1d12]">{{ f.title }}</h3>
+            <p class="mt-2 text-sm leading-relaxed text-[#6b5544]">{{ f.desc }}</p>
+          </article>
+        </div>
       </div>
     </section>
 
@@ -200,17 +225,24 @@ onMounted(async () => {
     <section id="flow" class="bg-[#faf6f1] py-16">
       <div class="mx-auto max-w-6xl px-4">
         <div class="text-center">
-          <h2 class="font-serif text-3xl font-bold text-[#2b1d12]">三步开启成长之旅</h2>
+          <p class="font-brand text-sm font-semibold tracking-[0.2em] text-[#ff5c00]">HOW IT WORKS</p>
+          <h2 class="mt-4 font-serif text-3xl font-bold text-[#2b1d12] sm:text-[38px]">四步开启成长之旅</h2>
           <p class="mt-3 text-[#6b5544]">老师、课堂、家长，各司其职又彼此连接</p>
         </div>
-        <div class="mt-12 grid gap-8 md:grid-cols-3">
-          <div v-for="(it, i) in flow" :key="it.step" class="relative rounded-2xl border border-[#f0e6dc] bg-white p-6">
+        <div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div v-for="(it, i) in flow" :key="it.step" class="relative rounded-3xl border border-[#f0e6dc] bg-white p-6 transition hover:border-[#ffd9bd] hover:shadow-[0_16px_40px_rgba(255,122,24,0.10)]">
             <span class="absolute -top-4 left-6 flex h-9 w-9 items-center justify-center rounded-full bg-[#ff5c00] text-sm font-bold text-white shadow">{{ it.step }}</span>
             <div class="mt-4 flex h-12 w-12 items-center justify-center rounded-xl bg-[#fff7ef] text-[#ff7a18]"><span class="material-symbols-rounded text-[24px]">{{ it.icon }}</span></div>
             <p class="mt-3 text-xs font-semibold uppercase tracking-wider text-[#d97706]">{{ it.who }}</p>
             <h3 class="text-lg font-bold">{{ it.title }}</h3>
             <p class="mt-2 text-sm leading-relaxed text-[#6b5544]">{{ it.desc }}</p>
-            <div v-if="i < flow.length - 1" class="absolute -right-4 top-1/2 hidden text-2xl text-[#e7c9a8] md:block">→</div>
+            <ul class="mt-3 space-y-1.5">
+              <li v-for="p in it.points" :key="p" class="flex items-start gap-1.5 text-sm text-[#8a6d58]">
+                <span class="material-symbols-rounded mt-0.5 text-[16px] text-[#ff5c00]">check</span>
+                <span>{{ p }}</span>
+              </li>
+            </ul>
+            <div v-if="i < flow.length - 1" class="absolute -right-4 top-1/2 hidden text-2xl text-[#e7c9a8] lg:block">→</div>
           </div>
         </div>
       </div>
