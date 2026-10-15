@@ -59,12 +59,14 @@ export const VIP_PLANS = {
 
 export const PUBLIC_VIP_PLAN_IDS = ['month', 'semester', 'year']
 
+// 注意：icon 必须使用 public/fonts 字体子集中已有的图标（见 scripts/make_font_subset.py），
+// 否则连字缺失会把图标名渲染成英文文本
 const VIP_BENEFITS = [
-  { icon: 'palette', title: '专属宠物皮肤', desc: '解锁班级限定宠物外观与成长特效' },
-  { icon: 'leaderboard', title: '高级排行榜', desc: '多维度榜单与学期成长报告' },
-  { icon: 'assignment_turned_in', title: '班级任务增强', desc: '任务模板库与批量完成统计' },
-  { icon: 'download', title: '数据导出', desc: '评价记录、积分报表一键导出' },
-  { icon: 'support_agent', title: '优先支持', desc: '会员专属客服通道，问题优先响应' },
+  { icon: 'pets', title: '专属宠物皮肤', desc: '解锁班级限定宠物外观与成长特效' },
+  { icon: 'trending_up', title: '高级排行榜', desc: '多维度榜单与学期成长报告' },
+  { icon: 'assignment', title: '班级任务增强', desc: '任务模板库与批量完成统计' },
+  { icon: 'save', title: '数据导出', desc: '评价记录、积分报表一键导出' },
+  { icon: 'volunteer_activism', title: '优先支持', desc: '会员专属客服通道，问题优先响应' },
 ]
 
 export function normalizeVipRow(row) {
