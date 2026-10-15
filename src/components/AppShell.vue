@@ -3,11 +3,13 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
+import { useAnalytics } from '@/composables/useAnalytics'
 import { CURRENT_CLASS_CHANGED_EVENT, useClassVip } from '@/composables/useClassVip'
 import { useStudentImport, STUDENTS_IMPORTED_EVENT } from '@/composables/useStudentImport'
 
 const route = useRoute()
 const { isAdmin, api, isGuest } = useAuth()
+useAnalytics()
 const { currentClassVipActive, refreshClassVipStatus } = useClassVip()
 
 withDefaults(defineProps<{

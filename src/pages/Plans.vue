@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { computed } from 'vue'
+import { useAnalytics } from '@/composables/useAnalytics'
 
 const router = useRouter()
+useAnalytics()
 
 interface PlanCard {
   id: string

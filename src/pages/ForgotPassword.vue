@@ -3,8 +3,10 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import axios from 'axios'
 import { isValidPhone } from '@/utils/phone'
+import { useAnalytics } from '@/composables/useAnalytics'
 
 const router = useRouter()
+useAnalytics()
 
 // 忘记密码无需登录态，用裸 axios（与登录页一致）
 const publicApi = axios.create({ baseURL: '/pet-garden/api' })

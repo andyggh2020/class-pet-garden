@@ -200,6 +200,41 @@ router.put('/site', adminMiddleware, async (req, res) => {
   res.json({ success: true, message: '站点信息已保存', ...(await readSiteInfo()) })
 })
 
+// ===== 第三方统计代码（百度统计/CNZZ 等，注入全站页面底部） =====
+async function readAnalyticsCode() {
+  const row = await db.prepare("SELECT value FROM settings WHERE `key` = 'analytics'").get()
+  if (!row?.value) return { code: '' }
+  try {
+    const parsed = JSON.parse(row.value)
+    return { code: typeof parsed.code === 'string' ? parsed.code : '' }
+  } catch {
+    return { code: '' }
+  }
+}
+
+// 获取统计代码（公开接口，供全站页面注入）
+router.get('/analytics', async (req, res) => {
+  res.json(await readAnalyticsCode())
+})
+
+// 保存统计代码（管理员）
+router.put('/analytics', adminMiddleware, async (req, res) => {
+  const code = String(req.body?.code ?? '').trim()
+  if (code.length > 4000) {
+    return res.status(400).json({ error: '统计代码过长，请精简到 4000 字以内' })
+  }
+
+  const payload = JSON.stringify({ code })
+  const existing = await db.prepare("SELECT `key` FROM settings WHERE `key` = 'analytics'").get()
+  if (existing) {
+    await db.prepare("UPDATE settings SET value = ? WHERE `key` = 'analytics'").run(payload)
+  } else {
+    await db.prepare("INSERT INTO settings (`key`, value) VALUES ('analytics', ?)").run(payload)
+  }
+
+  res.json({ success: true, message: '统计代码已保存', ...(await readAnalyticsCode()) })
+})
+
 // 客服信息（客服电话 + 客服二维码）
 async function readContactInfo() {
   const row = await db.prepare("SELECT value FROM settings WHERE `key` = 'contactInfo'").get()

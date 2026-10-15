@@ -30,6 +30,10 @@ const qrInputRef = ref<HTMLInputElement | null>(null)
 const siteIcp = ref('')
 const siteSaving = ref(false)
 
+// 第三方统计代码（百度统计/CNZZ 等，全站页面底部注入）
+const analyticsCode = ref('')
+const analyticsSaving = ref(false)
+
 // 客服信息（客服电话 + 客服二维码，展示在销售页联系客服区块）
 const contactPhone = ref('')
 const contactQrUrl = ref('')
@@ -286,6 +290,8 @@ async function loadPaymentInfo() {
     paymentDefaults.value = res.data.defaults || null
     const siteRes = await api.get<{ icp?: string }>('/settings/site')
     siteIcp.value = siteRes.data.icp || ''
+    const analyticsRes = await api.get<{ code?: string }>('/settings/analytics')
+    analyticsCode.value = analyticsRes.data.code || ''
     const contactRes = await api.get<{ phone?: string; qrUrl?: string }>('/settings/contact')
     contactPhone.value = contactRes.data.phone || ''
     contactQrUrl.value = normalizeUploadUrl(contactRes.data.qrUrl || '')
@@ -391,6 +397,23 @@ async function saveSiteInfo() {
     toast.error(message || '保存站点信息失败')
   } finally {
     siteSaving.value = false
+  }
+}
+
+// ===== 第三方统计代码 =====
+async function saveAnalyticsCode() {
+  analyticsSaving.value = true
+  try {
+    const res = await api.put<{ message?: string }>('/settings/analytics', {
+      code: analyticsCode.value.trim(),
+    })
+    toast.success(res.data.message || '统计代码已保存')
+  } catch (error: unknown) {
+    console.error('保存统计代码失败:', error)
+    const message = (error as { response?: { data?: { error?: string } } })?.response?.data?.error
+    toast.error(message || '保存统计代码失败')
+  } finally {
+    analyticsSaving.value = false
   }
 }
 
@@ -1206,6 +1229,33 @@ onMounted(() => {
               >
                 <span class="material-symbols-rounded text-[18px] leading-none">save</span>
                 {{ siteSaving ? '保存中…' : '保存备案号' }}
+              </button>
+            </div>
+
+            <div class="rounded-2xl border border-[#f3ece4] bg-[#fffdfb] p-5">
+              <span class="text-sm font-bold text-[#4d3527]">第三方统计代码</span>
+              <p class="mt-1 text-xs text-[#a1836d]">填写百度统计、CNZZ 等平台的统计代码，保存后自动注入全站页面底部（留空则不注入）。</p>
+
+              <label class="block mt-3">
+                <span class="text-sm font-bold text-[#4d3527]">统计代码</span>
+                <textarea
+                  v-model="analyticsCode"
+                  rows="6"
+                  maxlength="4000"
+                  class="mt-2 w-full rounded-xl border border-[#ecdfd4] bg-white px-4 py-3 font-mono text-xs leading-5 text-[#422d20] outline-none focus:border-orange-300"
+                  placeholder="粘贴统计平台提供的完整代码，例如百度统计：&#10;<script>&#10;var _hmt = _hmt || [];&#10;(function() {&#10;  var hm = document.createElement(&quot;script&quot;);&#10;  hm.src = &quot;https://hm.baidu.com/hm.js?你的站点ID&quot;;&#10;  var s = document.getElementsByTagName(&quot;script&quot;)[0];&#10;  s.parentNode.insertBefore(hm, s);&#10;})();&#10;</script>"
+                />
+              </label>
+              <p class="mt-1.5 text-xs text-[#c0a894]">支持完整 script 代码或统计 ID 片段；注入位置为页面底部，不影响页面加载。</p>
+
+              <button
+                type="button"
+                class="mt-5 inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-xl bg-[#4d3527] px-4 text-sm font-semibold text-white transition hover:bg-[#3a281d] disabled:cursor-not-allowed disabled:opacity-50"
+                :disabled="analyticsSaving"
+                @click="saveAnalyticsCode"
+              >
+                <span class="material-symbols-rounded text-[18px] leading-none">save</span>
+                {{ analyticsSaving ? '保存中…' : '保存统计代码' }}
               </button>
             </div>
 

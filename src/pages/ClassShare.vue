@@ -3,6 +3,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { getPetLevelImage } from '@/data/pets'
+import { useAnalytics } from '@/composables/useAnalytics'
+
+useAnalytics()
 
 const route = useRoute()
 

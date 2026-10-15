@@ -4,6 +4,9 @@ import { useRoute } from 'vue-router'
 import axios from 'axios'
 import { calculateLevel, getLevelProgress, getPetLevelImage, getPetType } from '@/data/pets'
 import { useToast } from '@/composables/useToast'
+import { useAnalytics } from '@/composables/useAnalytics'
+
+useAnalytics()
 
 interface ShareStudent {
   id: string

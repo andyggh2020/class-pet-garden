@@ -2,20 +2,18 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import { useAnalytics } from '@/composables/useAnalytics'
 import { normalizeUploadUrl } from '@/utils/uploadUrl'
 
 const router = useRouter()
 const { isGuest, username } = useAuth()
+useAnalytics()
 
 // ===== 可配置信息（上线前替换为真实内容） =====
 const brandName = '班级宠物园'
 // 备案号：默认占位，管理员在后台「收款设置 → ICP 备案号」填写后自动同步
 const beianNo = ref('京ICP备XXXXXXXX号-X')
 const serviceTime = '每日 9:00 - 21:00'
-// 第三方统计代码（百度统计/微信统计/友盟等）。留空则不注入。
-// 例如百度统计：
-//   "var _hmt=_hmt||[];(function(){var hm=document.createElement('script');hm.src='https://hm.baidu.com/hm.js?你的ID';var s=document.getElementsByTagName('script')[0];s.parentNode.insertBefore(hm,s);})();"
-const analyticsScript: string = ''
 
 // 客服信息：默认占位，运行时从后台"系统设置 → 客服信息"自动同步
 const contactPhone = ref('')
@@ -90,12 +88,6 @@ function goLogin() {
 }
 
 onMounted(async () => {
-  // 注入统计代码（若已配置）
-  if (analyticsScript && analyticsScript.trim()) {
-    const s = document.createElement('script')
-    s.textContent = analyticsScript
-    document.head.appendChild(s)
-  }
   // 同步后台客服信息（系统设置里的客服电话与客服二维码）
   // 注意：站点部署在 /pet-garden/ 下，接口必须带部署 base，否则服务器上 404
   try {

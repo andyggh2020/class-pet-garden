@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import axios from 'axios'
+import { useAnalytics } from '@/composables/useAnalytics'
+
+useAnalytics()
 
 const publicApi = axios.create({ baseURL: '/pet-garden/api' })
 

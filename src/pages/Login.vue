@@ -2,10 +2,12 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuth, ADMIN_USERNAME } from '@/composables/useAuth'
+import { useAnalytics } from '@/composables/useAnalytics'
 import { useToast } from '@/composables/useToast'
 import { isValidPhone } from '@/utils/phone'
 
 const router = useRouter()
+useAnalytics()
 const route = useRoute()
 const { api, setUser, isGuest } = useAuth()
 const toast = useToast()
