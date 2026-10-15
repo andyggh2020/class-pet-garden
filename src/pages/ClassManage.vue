@@ -827,7 +827,7 @@ onMounted(() => {
                     class="inline-flex h-9 items-center gap-1 rounded-xl border border-[#f0e5da] px-3 text-sm font-semibold text-[#765f50] transition hover:bg-[#fff7f1]"
                     @click="openMemberDetail(item)"
                   >
-                    <span class="material-symbols-rounded text-[16px] leading-none">visibility</span>
+                    <span class="material-symbols-rounded text-[16px] leading-none">view_list</span>
                     查看数据
                   </button>
                   <button
