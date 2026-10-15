@@ -96,8 +96,9 @@ onMounted(async () => {
     document.head.appendChild(s)
   }
   // 同步后台客服信息（系统设置里的客服电话与客服二维码）
+  // 注意：站点部署在 /pet-garden/ 下，接口必须带部署 base，否则服务器上 404
   try {
-    const res = await fetch('/api/settings/contact')
+    const res = await fetch('/pet-garden/api/settings/contact')
     if (res.ok) {
       const d = await res.json()
       contactPhone.value = d.phone || ''
@@ -108,7 +109,7 @@ onMounted(async () => {
   }
   // 同步后台站点信息（ICP 备案号）
   try {
-    const res = await fetch('/api/settings/site')
+    const res = await fetch('/pet-garden/api/settings/site')
     if (res.ok) {
       const d = await res.json()
       if (d.icp) beianNo.value = d.icp
