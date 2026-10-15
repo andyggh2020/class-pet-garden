@@ -218,6 +218,14 @@ function requestConfigForCurrentClass() {
     : undefined
 }
 
+function goCreateClass() {
+  if (isGuest.value) {
+    router.push('/register')
+  } else {
+    openImportModal({ expandCreateClass: true })
+  }
+}
+
 async function enterDemoGarden() {
   try {
     const res = await api.get('/classes/demo', { headers: { Authorization: 'Bearer guest' } })
@@ -1405,6 +1413,10 @@ onMounted(async () => {
     if (openLandingFromQuery(route.query, route.path)) {
       return
     }
+    // 从销售页「我是老师，创建新班级」新窗口进入时，自动打开创建班级弹窗
+    if (route.query.createClass === '1') {
+      openImportModal({ expandCreateClass: true })
+    }
     const wantsDemo = route.query.demo === '1'
     if (wantsDemo) {
       const studentId = route.query.studentId
@@ -1465,7 +1477,7 @@ onUnmounted(() => {
             <p class="mt-[22px] max-w-[660px] text-base leading-[1.45] text-[#666] sm:text-xl">老师快速加分，学生的宠物随习惯一起升级。</p>
             <div class="mt-[22px] flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <button type="button" class="font-brand h-12 rounded-full bg-[#ff5c00] px-8 text-[15px] font-bold text-white shadow-[0_16px_40px_rgba(0,0,0,0.07)] transition hover:bg-[#e95300]" @click="enterDemoGarden">进入演示班级</button>
-              <router-link to="/register" class="font-brand inline-flex h-12 items-center rounded-full border border-[#ff5c00] bg-white px-8 text-[15px] font-bold text-[#ff5c00] transition hover:bg-[#fff3ec]">我是老师，创建新班级</router-link>
+              <button type="button" class="font-brand inline-flex h-12 items-center rounded-full border border-[#ff5c00] bg-white px-8 text-[15px] font-bold text-[#ff5c00] transition hover:bg-[#fff3ec]" @click="goCreateClass">我是老师，创建新班级</button>
             </div>
             <div class="mt-[22px] flex h-[86px] w-full max-w-[420px] items-center justify-center gap-[18px] rounded-xl border border-[#f3f4f6] bg-white px-[18px] py-[14px] text-left shadow-[0_16px_40px_rgba(0,0,0,0.07)]">
               <div class="relative h-[58px] w-[58px] shrink-0 rounded-xl bg-[#fff3ec]">
@@ -1515,7 +1527,7 @@ onUnmounted(() => {
               <span class="text-[#666]">导入学生，设置评价规则，让成长被看见。</span>
               <button type="button" class="font-brand font-bold text-[#ff5c00] underline-offset-2 transition hover:text-[#e95300] hover:underline" @click="enterDemoGarden">进入演示班级</button>
               <span class="text-[#ccc]">·</span>
-              <router-link to="/register" class="font-brand font-bold text-[#ff5c00] underline-offset-2 transition hover:text-[#e95300] hover:underline">我是老师，创建新班级</router-link>
+              <button type="button" class="font-brand font-bold text-[#ff5c00] underline-offset-2 transition hover:text-[#e95300] hover:underline" @click="goCreateClass">我是老师，创建新班级</button>
             </div>
             <p class="font-brand text-sm text-[#888]">© 2026 班级宠物园。保留所有权利。</p>
           </div>

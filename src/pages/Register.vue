@@ -23,8 +23,9 @@ const features = [
 ]
 
 onMounted(() => {
+  // 已登录老师误入注册页：直接回工作台（可创建班级），不再弹回销售页
   if (!isGuest.value) {
-    router.replace('/')
+    router.replace('/app')
   }
 })
 
@@ -61,7 +62,7 @@ async function handleSubmit() {
       setUser(res.data.user, res.data.token)
       const welcomeMessage = res.data.welcomeVip?.message
       toast.success(welcomeMessage ? `注册成功！${welcomeMessage}` : '注册成功，欢迎加入班级宠物园！')
-      router.replace('/')
+      router.replace('/app')
     }
   } catch (err: any) {
     error.value = err.response?.data?.error || '注册失败，请重试'

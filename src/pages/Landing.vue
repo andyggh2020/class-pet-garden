@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
+const { isGuest } = useAuth()
 
 // ===== 可配置信息（上线前替换为真实内容） =====
 const brandName = '班级宠物园'
@@ -53,6 +55,14 @@ const faqs = [
 
 function goWorkbench() {
   window.open(router.resolve('/app').href, '_blank', 'noopener,noreferrer')
+}
+function goCreateClass() {
+  if (isGuest.value) {
+    router.push('/register')
+  } else {
+    // 已登录老师：新窗口进工作台并自动打开创建班级弹窗
+    window.open(router.resolve('/app?createClass=1').href, '_blank', 'noopener,noreferrer')
+  }
 }
 function goDemo() {
   // 进入演示班级：/app?demo=1 由工作台自动拉起演示模式
@@ -136,7 +146,7 @@ onMounted(async () => {
         <p class="mt-[22px] max-w-[660px] text-base leading-[1.45] text-[#666] sm:text-xl">老师快速加分，学生的宠物随习惯一起升级。</p>
         <div class="mt-[22px] flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
           <button type="button" class="font-brand h-12 rounded-full bg-[#ff5c00] px-8 text-[15px] font-bold text-white shadow-[0_16px_40px_rgba(0,0,0,0.07)] transition hover:bg-[#e95300]" @click="goDemo">进入演示班级</button>
-          <router-link to="/register" class="font-brand inline-flex h-12 items-center rounded-full border border-[#ff5c00] bg-white px-8 text-[15px] font-bold text-[#ff5c00] transition hover:bg-[#fff3ec]">我是老师，创建新班级</router-link>
+          <button type="button" class="font-brand inline-flex h-12 items-center rounded-full border border-[#ff5c00] bg-white px-8 text-[15px] font-bold text-[#ff5c00] transition hover:bg-[#fff3ec]" @click="goCreateClass">我是老师，创建新班级</button>
         </div>
         <div class="mt-[22px] flex h-[86px] w-full max-w-[420px] items-center justify-center gap-[18px] rounded-xl border border-[#f3f4f6] bg-white px-[18px] py-[14px] text-left shadow-[0_16px_40px_rgba(0,0,0,0.07)]">
           <div class="relative h-[58px] w-[58px] shrink-0 rounded-xl bg-[#fff3ec]">
@@ -283,7 +293,7 @@ onMounted(async () => {
           <span class="text-[#666]">导入学生，设置评价规则，让成长被看见。</span>
           <button type="button" class="font-brand font-bold text-[#ff5c00] underline-offset-2 transition hover:text-[#e95300] hover:underline" @click="goDemo">进入演示班级</button>
           <span class="text-[#ccc]">·</span>
-          <router-link to="/register" class="font-brand font-bold text-[#ff5c00] underline-offset-2 transition hover:text-[#e95300] hover:underline">我是老师，创建新班级</router-link>
+          <button type="button" class="font-brand font-bold text-[#ff5c00] underline-offset-2 transition hover:text-[#e95300] hover:underline" @click="goCreateClass">我是老师，创建新班级</button>
         </div>
         <p class="font-brand text-sm text-[#888]">© 2026 {{ brandName }}。保留所有权利。</p>
         <p class="text-xs text-[#aaa]">{{ beianNo }}</p>
