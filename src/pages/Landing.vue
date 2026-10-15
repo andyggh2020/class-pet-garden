@@ -46,11 +46,16 @@ const plans = [
 ]
 
 const faqs = [
-  { q: '需要做培训吗？', a: '不需要。老师扫码即可用，界面和玩游戏一样直观，学生零门槛上手。' },
-  { q: '家长怎么参与？', a: '老师把班级码发到家长群，家长扫码就能看见孩子的宠物成长和喂养记录。' },
-  { q: '数据安全吗？', a: '账号分级管理，老师掌控评价权限，家长仅能查看自己孩子的数据。' },
-  { q: '支持哪些设备？', a: '手机、平板、电脑浏览器均可使用，无需下载 App。' },
-  { q: '可以试用吗？', a: '基础版永久免费，会员版可先创建班级体验，满意后再开通。' },
+  { q: '需要做培训吗？', a: '不需要。老师扫码即可使用，界面像玩游戏一样直观，学生零门槛上手，5 分钟就能开课。' },
+  { q: '家长怎么参与？', a: '老师把班级码发到家长群，家长扫码就能看见自己孩子的宠物成长和喂养记录，无需注册。' },
+  { q: '学生没有手机能参与吗？', a: '可以。课堂评价由老师在平板上记录，家长用手机扫码查看，学生端无需设备即可参与。' },
+  { q: '积分和宠物怎么关联？', a: '学生课堂表现好会获得积分，积分用于喂养宠物、积累经验，宠物随之成长升级，形成正向激励。' },
+  { q: '宠物有哪些种类？', a: '提供小白兔、橘猫、柴犬、熊猫、狐狸等多种宠物，领养后通过日常喂养慢慢长大，深受孩子喜爱。' },
+  { q: '数据安全吗？', a: '账号分级管理：老师掌控评价权限，家长仅能查看自己孩子的数据，所有信息加密存储。' },
+  { q: '支持哪些设备？', a: '手机、平板、电脑浏览器均可使用，无需下载 App，断网也能在本地流畅运行。' },
+  { q: '会员版和免费版有什么区别？', a: '基础版永久免费，满足日常课堂激励；会员版解锁更多宠物、主题皮肤与高级统计，按需开通。' },
+  { q: '怎么开通会员？', a: '在会员页选择方案，扫码完成支付后由后台授权激活，班级即可使用对应权益。' },
+  { q: '班级码有效期多久？', a: '班级码长期有效，可随时在班级设置中重置；学生扫码即可加入，毕业或换班后可关闭。' },
 ]
 
 function goWorkbench() {
@@ -224,13 +229,14 @@ onMounted(async () => {
 
     <!-- FAQ -->
     <section id="faq" class="bg-[#faf6f1] py-16">
-      <div class="mx-auto max-w-3xl px-4">
+      <div class="mx-auto max-w-5xl px-4">
         <h2 class="text-center font-serif text-3xl font-bold text-[#2b1d12]">常见问题</h2>
-        <div class="mt-10 space-y-4">
+        <p class="mt-3 text-center text-sm text-[#9a735d]">关于使用、家长参与与会员的常见疑问，点击展开查看</p>
+        <div class="mt-10 grid gap-4 md:grid-cols-2">
           <details v-for="(f, i) in faqs" :key="i" class="group rounded-2xl border border-[#f0e6dc] bg-white p-5 [&_summary]:cursor-pointer">
             <summary class="flex items-center justify-between font-semibold text-[#422d20]">
               <span>{{ f.q }}</span>
-              <span class="material-symbols-rounded text-[#d97706] transition group-open:rotate-180">expand_more</span>
+              <span class="material-symbols-rounded shrink-0 text-[#d97706] transition group-open:rotate-180">expand_more</span>
             </summary>
             <p class="mt-3 text-sm leading-relaxed text-[#6b5544]">{{ f.a }}</p>
           </details>
