@@ -11,7 +11,7 @@ const { isAdmin } = useAuth()
 const { currentClassVipActive, refreshClassVipStatus } = useClassVip()
 
 withDefaults(defineProps<{
-  activePage: 'dashboard' | 'gallery' | 'rules' | 'records' | 'ranking' | 'vip' | 'tasks' | 'manage'
+  activePage: 'dashboard' | 'gallery' | 'rules' | 'records' | 'ranking' | 'vip' | 'tasks' | 'manage' | 'admin-home'
   eyebrow?: string
   title?: string
   navigationDimmed?: boolean
@@ -113,6 +113,7 @@ watch(() => route.path, () => {
           </router-link>
           <router-link to="/ranking" class="flex min-h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition" :class="activePage === 'ranking' ? 'bg-[#fff0e2] text-[#b85e25] shadow-[inset_0_0_0_1px_rgba(234,151,86,0.18)]' : 'text-[#765f50] hover:bg-[#fff7f1] hover:text-[#b85e25]'"><span class="material-symbols-rounded text-[20px] leading-none">emoji_events</span>班级排行榜</router-link>
           <router-link v-if="!currentClassVipActive" to="/vip" class="flex min-h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition" :class="activePage === 'vip' ? 'bg-[#fff0e2] text-[#b85e25] shadow-[inset_0_0_0_1px_rgba(234,151,86,0.18)]' : 'text-[#765f50] hover:bg-[#fff7f1] hover:text-[#b85e25]'"><span class="material-symbols-rounded text-[20px] leading-none">workspace_premium</span>灵犀计划</router-link>
+          <router-link v-if="isAdmin" to="/admin" class="flex min-h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition" :class="activePage === 'admin-home' ? 'bg-[#fff0e2] text-[#b85e25] shadow-[inset_0_0_0_1px_rgba(234,151,86,0.18)]' : 'text-[#765f50] hover:bg-[#fff7f1] hover:text-[#b85e25]'"><span class="material-symbols-rounded text-[20px] leading-none">dashboard</span>管理工作台</router-link>
           <router-link v-if="isAdmin" to="/manage" class="flex min-h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition" :class="activePage === 'manage' ? 'bg-[#fff0e2] text-[#b85e25] shadow-[inset_0_0_0_1px_rgba(234,151,86,0.18)]' : 'text-[#765f50] hover:bg-[#fff7f1] hover:text-[#b85e25]'"><span class="material-symbols-rounded text-[20px] leading-none">manage_accounts</span>系统管理</router-link>
         </nav>
 

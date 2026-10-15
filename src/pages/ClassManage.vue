@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import AppShell from '@/components/AppShell.vue'
 import ConfirmDialog from '@/components/ConfirmDialog.vue'
 import { useAuth } from '@/composables/useAuth'
@@ -9,6 +9,7 @@ import { getPetType } from '@/data/pets'
 import type { AdminClassOverview, AdminMemberDetail, AdminMemberItem, AdminMemberOverview, ClassVipItem, PaymentInfoAdmin } from '@/types'
 
 const router = useRouter()
+const route = useRoute()
 const { api, isAdmin } = useAuth()
 const toast = useToast()
 
@@ -43,7 +44,13 @@ const expandedClassId = ref('')
 
 const qrPreviewSrc = computed(() => paymentQrUrl.value.trim())
 
-const activeTab = ref<AdminTab>('classes')
+// 支持从管理工作台快捷操作跳转并直接定位 tab，如 /manage?tab=members
+const initialTab = (): AdminTab => {
+  const q = route.query.tab
+  if (q === 'classes' || q === 'members' || q === 'payment') return q
+  return 'classes'
+}
+const activeTab = ref<AdminTab>(initialTab())
 const loading = ref(true)
 const membersLoading = ref(false)
 const saving = ref(false)

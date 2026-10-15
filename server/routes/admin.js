@@ -4,7 +4,7 @@ import { db } from '../db.js'
 import { ADMIN_USERNAME, adminMiddleware } from '../middleware/admin.js'
 import { hashPassword } from '../utils/password.js'
 import { deleteClassData, deleteUserData, DEMO_CLASS_ID } from '../utils/adminCleanup.js'
-import { normalizeVipRow } from './vip.js'
+import { normalizeVipRow, VIP_PLANS } from './vip.js'
 
 const router = Router()
 
@@ -23,6 +23,111 @@ const BACKUP_TABLES = [
   'task_completions',
   'class_vip_subscriptions',
 ]
+
+// 管理工作台：全站运营统计
+router.get('/dashboard', async (req, res, next) => {
+  try {
+    const now = Date.now()
+    const DAY = 86400000
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const t0 = todayStart.getTime()
+    const weekStart = t0 - 6 * DAY
+
+    const [teachers, classes, students, vipAll, records7d, activeAuthors] = await Promise.all([
+      db.prepare('SELECT id, created_at FROM users WHERE is_guest = 0').all(),
+      db.prepare('SELECT id, user_id, created_at FROM classes').all(),
+      db.prepare('SELECT id, created_at FROM students').all(),
+      db.prepare(`
+        SELECT s.class_id, s.plan, s.status, s.started_at, s.expires_at, c.name AS class_name
+        FROM class_vip_subscriptions s
+        LEFT JOIN classes c ON c.id = s.class_id
+      `).all(),
+      db.prepare('SELECT class_id, timestamp FROM evaluation_records WHERE timestamp >= ?').all(weekStart),
+      db.prepare(`
+        SELECT DISTINCT c.user_id AS uid
+        FROM evaluation_records r
+        JOIN classes c ON c.id = r.class_id
+        WHERE r.timestamp >= ?
+      `).all(weekStart),
+    ])
+
+    const activeVips = vipAll.filter(v => v.status === 'active' && v.expires_at > now)
+    const priceOf = plan => VIP_PLANS[plan]?.price || 0
+
+    // 近 7 天每日趋势（含今天）
+    const days = []
+    for (let i = 0; i < 7; i++) {
+      const start = weekStart + i * DAY
+      days.push({
+        date: new Date(start).toISOString().slice(5, 10).replace('-', '/'),
+        start,
+        end: start + DAY,
+        teachers: 0,
+        classes: 0,
+        students: 0,
+        records: 0,
+        income: 0,
+      })
+    }
+    const inDay = (ts) => {
+      const d = days.find(x => ts >= x.start && ts < x.end)
+      return d || null
+    }
+    for (const u of teachers) { const d = inDay(Number(u.created_at)); if (d) d.teachers++ }
+    for (const c of classes) { const d = inDay(Number(c.created_at)); if (d) d.classes++ }
+    for (const s of students) { const d = inDay(Number(s.created_at)); if (d) d.students++ }
+    for (const r of records7d) { const d = inDay(Number(r.timestamp)); if (d) d.records++ }
+    for (const v of vipAll) {
+      if (v.status !== 'active') continue
+      const d = inDay(Number(v.started_at))
+      if (d) d.income += priceOf(v.plan)
+    }
+
+    const expiringSoon = activeVips
+      .filter(v => v.expires_at <= now + 7 * DAY)
+      .map(v => ({
+        className: v.class_name || '未知班级',
+        plan: v.plan,
+        planLabel: VIP_PLANS[v.plan]?.label || v.plan,
+        expiresAt: v.expires_at,
+        daysLeft: Math.max(0, Math.ceil((v.expires_at - now) / DAY)),
+      }))
+      .sort((a, b) => a.expiresAt - b.expiresAt)
+
+    res.json({
+      totals: {
+        teachers: teachers.length,
+        classes: classes.length,
+        students: students.length,
+        activeVip: activeVips.length,
+      },
+      today: {
+        teachers: teachers.filter(u => Number(u.created_at) >= t0).length,
+        classes: classes.filter(c => Number(c.created_at) >= t0).length,
+        students: students.filter(s => Number(s.created_at) >= t0).length,
+        records: records7d.filter(r => Number(r.timestamp) >= t0).length,
+        income: days[6].income,
+      },
+      income: {
+        total: vipAll.filter(v => v.status === 'active').reduce((sum, v) => sum + priceOf(v.plan), 0),
+        today: days[6].income,
+      },
+      trend: days.map(({ date, teachers: t, classes: c, students: s, records: r, income: i }) => ({
+        date, teachers: t, classes: c, students: s, records: r, income: i,
+      })),
+      metrics: {
+        activeAuthors: activeAuthors.length,
+        vipCoverage: classes.length ? Math.round(activeVips.length / classes.length * 100) : 0,
+        expiringCount: expiringSoon.length,
+        records7d: records7d.length,
+      },
+      expiringSoon,
+    })
+  } catch (error) {
+    next(error)
+  }
+})
 
 router.get('/backup', async (req, res, next) => {
   try {
