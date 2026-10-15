@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { ADMIN_USERNAME } from '@/composables/useAuth'
+import Landing from '@/pages/Landing.vue'
 import Home from '@/pages/Home.vue'
 import PetPreview from '@/pages/PetPreview.vue'
 import EvaluationRules from '@/pages/EvaluationRules.vue'
@@ -15,7 +16,10 @@ import StudentShare from '@/pages/StudentShare.vue'
 const router = createRouter({
   history: createWebHistory(),
   routes: [
-    { path: '/', alias: '/pet-garden/', name: 'home', component: Home },
+    // 销售落地页（面向市场），作为站点首页
+    { path: '/', alias: '/pet-garden/', name: 'landing', component: Landing },
+    // 班级工作台首页（原 Home），置于 /app 下，与营销页分离
+    { path: '/app', alias: '/pet-garden/app', name: 'home', component: Home },
     { path: '/preview', alias: '/pet-garden/preview', name: 'preview', component: PetPreview },
     { path: '/rules', alias: '/pet-garden/rules', name: 'rules', component: EvaluationRules },
     { path: '/records', alias: '/pet-garden/records', name: 'records', component: FeedingRecords },
