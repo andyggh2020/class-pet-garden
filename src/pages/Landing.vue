@@ -38,13 +38,6 @@ const flow = [
 ]
 
 // 套餐（价格以工作台内实际方案为准）
-const plans = [
-  { name: '基础版', price: '免费', unit: '永久', highlight: false,
-    points: ['创建班级与导入学生', '成长宠物与积分体系', '家长实时成长相册', '基础评价与规则'] },
-  { name: '会员版', price: '进入工作台', unit: '查看当前方案', highlight: true,
-    points: ['解锁全部成长内容', '专属宠物进化与皮肤', '班级荣誉墙与数据分析', '优先客服与定制支持'] },
-]
-
 const faqs = [
   { q: '需要做培训吗？', a: '不需要。老师扫码即可使用，界面像玩游戏一样直观，学生零门槛上手，5 分钟就能开课。' },
   { q: '家长怎么参与？', a: '老师把班级码发到家长群，家长扫码就能看见自己孩子的宠物成长和喂养记录，无需注册。' },
@@ -112,7 +105,7 @@ onMounted(async () => {
         <nav class="hidden items-center gap-7 text-sm font-medium text-[#6b5544] md:flex">
           <a href="#features" class="hover:text-[#d97706]">功能亮点</a>
           <a href="#flow" class="hover:text-[#d97706]">使用流程</a>
-          <a href="#plans" class="hover:text-[#d97706]">套餐方案</a>
+          <router-link to="/plans" class="hover:text-[#d97706]">套餐方案</router-link>
           <a href="#faq" class="hover:text-[#d97706]">常见问题</a>
           <router-link to="/guide" target="_blank" rel="noopener noreferrer" class="hover:text-[#d97706]">操作说明</router-link>
           <a href="#contact" class="hover:text-[#d97706]">联系客服</a>
@@ -200,30 +193,33 @@ onMounted(async () => {
       </div>
     </section>
 
-    <!-- 套餐方案 -->
+    <!-- 套餐方案（完整版见 /plans 页面） -->
     <section id="plans" class="mx-auto max-w-6xl px-4 py-16">
-      <div class="text-center">
+      <div class="rounded-3xl border border-[#f0e6dc] bg-white p-8 text-center shadow-sm md:p-12">
         <h2 class="font-serif text-3xl font-bold text-[#2b1d12]">简单透明的套餐</h2>
-        <p class="mt-3 text-[#6b5544]">基础版永久免费，会员版解锁完整成长体验</p>
-      </div>
-      <div class="mt-10 grid gap-6 md:grid-cols-2 md:max-w-3xl md:mx-auto">
-        <article v-for="p in plans" :key="p.name" :class="['rounded-3xl border p-8', p.highlight ? 'border-[#ff5c00] bg-gradient-to-b from-[#fff7ef] to-white shadow-lg ring-2 ring-[#ffd9bd]' : 'border-[#f0e6dc] bg-white shadow-sm']">
-          <div v-if="p.highlight" class="mb-3 inline-block rounded-full bg-[#ff5c00] px-3 py-1 text-xs font-bold text-white">最受欢迎</div>
-          <h3 class="text-xl font-bold">{{ p.name }}</h3>
-          <div class="mt-3 flex items-end gap-1">
-            <span class="font-serif text-4xl font-bold text-[#d97706]">{{ p.price }}</span>
-            <span class="mb-1 text-sm text-[#9a735d]">/ {{ p.unit }}</span>
+        <p class="mt-3 text-[#6b5544]">基础版永久免费；灵犀计划按班级开通，月付 ¥18 起，学期 ¥68、年度 ¥128 更划算</p>
+        <div class="mx-auto mt-8 grid max-w-3xl gap-4 text-left sm:grid-cols-3">
+          <div class="rounded-2xl border border-[#f0e6dc] bg-[#fffdfb] p-5">
+            <p class="text-sm font-bold text-[#422d20]">月会员</p>
+            <p class="mt-2 font-serif text-2xl font-bold text-[#d97706]">¥18<span class="text-sm font-normal text-[#9a735d]"> / 月</span></p>
           </div>
-          <ul class="mt-6 space-y-3 text-sm text-[#5a4636]">
-            <li v-for="pt in p.points" :key="pt" class="flex items-start gap-2">
-              <span class="material-symbols-rounded mt-0.5 text-[18px] text-[#ff5c00]">check</span>
-              <span>{{ pt }}</span>
-            </li>
-          </ul>
-          <button type="button" :class="['mt-8 inline-flex h-12 w-full items-center justify-center gap-1.5 rounded-full text-base font-bold transition', p.highlight ? 'bg-[#ff5c00] text-white hover:bg-[#e84e00]' : 'border border-[#e7d8c8] text-[#b85e25] hover:border-[#d97706]']" @click="goWorkbench">
-            进入工作台开通
-          </button>
-        </article>
+          <div class="relative rounded-2xl border-2 border-[#ff5c00] bg-gradient-to-b from-[#fff7ef] to-white p-5 shadow-md">
+            <span class="absolute -top-2.5 right-3 rounded-full bg-[#ff5c00] px-2 py-0.5 text-xs font-bold text-white">推荐</span>
+            <p class="text-sm font-bold text-[#422d20]">学期会员</p>
+            <p class="mt-2 font-serif text-2xl font-bold text-[#d97706]">¥68<span class="text-sm font-normal text-[#9a735d]"> / 学期</span></p>
+          </div>
+          <div class="rounded-2xl border border-[#f0e6dc] bg-[#fffdfb] p-5">
+            <p class="text-sm font-bold text-[#422d20]">年度会员</p>
+            <p class="mt-2 font-serif text-2xl font-bold text-[#d97706]">¥128<span class="text-sm font-normal text-[#9a735d]"> / 年</span></p>
+          </div>
+        </div>
+        <router-link
+          to="/plans"
+          class="mt-8 inline-flex h-12 items-center gap-1.5 rounded-full bg-[#ff5c00] px-7 text-base font-bold text-white transition hover:bg-[#e84e00]"
+        >
+          查看完整方案与会员权益
+          <span class="material-symbols-rounded text-[20px]">arrow_forward</span>
+        </router-link>
       </div>
     </section>
 
