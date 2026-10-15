@@ -57,6 +57,22 @@ if (!user.value) {
   localStorage.setItem('user', JSON.stringify(guestUser))
 }
 
+// 跨标签页同步登录态：登录/登出通常发生在另一个窗口（新窗口打开），
+// storage 事件只在"其他"标签页修改 localStorage 时触发，用它让本页实时更新
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key !== 'user' && event.key !== 'token') return
+    try {
+      const raw = localStorage.getItem('user')
+      if (!raw) return
+      user.value = JSON.parse(raw) as User
+      token.value = localStorage.getItem('token') || ''
+    } catch {
+      /* 忽略无效数据 */
+    }
+  })
+}
+
 export const ADMIN_USERNAME = 'admin'
 
 // 计算属性

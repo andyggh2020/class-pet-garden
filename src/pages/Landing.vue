@@ -4,7 +4,7 @@ import { useRouter } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
-const { isGuest } = useAuth()
+const { isGuest, username } = useAuth()
 
 // ===== 可配置信息（上线前替换为真实内容） =====
 const brandName = '班级宠物园'
@@ -69,7 +69,12 @@ function goDemo() {
   router.push('/app?demo=1')
 }
 function goLogin() {
-  router.push('/login')
+  if (isGuest.value) {
+    window.open(router.resolve('/login').href, '_blank', 'noopener,noreferrer')
+  } else {
+    // 已登录：点击账号胶囊直接进工作台
+    window.open(router.resolve('/app').href, '_blank', 'noopener,noreferrer')
+  }
 }
 
 onMounted(async () => {
@@ -127,8 +132,8 @@ onMounted(async () => {
             @click="goLogin"
           >
             <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[#ffe7c8] text-[#d97706]"><span class="material-symbols-rounded text-[18px]">person</span></span>
-            <span>游客</span>
-            <span class="text-sm text-[#999]">点击登录</span>
+            <span class="max-w-[120px] truncate">{{ isGuest ? '游客' : username }}</span>
+            <span class="text-sm text-[#999]">{{ isGuest ? '点击登录' : '教师账号' }}</span>
           </button>
           <button type="button" class="rounded-full bg-[#ff5c00] px-5 py-2 text-sm font-bold text-white shadow-sm transition hover:bg-[#e84e00]" @click="goWorkbench">进入工作台</button>
         </div>
