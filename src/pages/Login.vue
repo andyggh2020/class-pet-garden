@@ -134,7 +134,7 @@ function guestContinue() {
                 <input v-model="rememberMe" type="checkbox" class="h-4 w-4 rounded border-[#edeff2]" />
                 记住我
               </label>
-              <button type="button" class="font-semibold text-[#ff5c00]">忘记密码？</button>
+              <router-link to="/forgot" class="font-semibold text-[#ff5c00] transition hover:text-[#ea580c]">忘记密码？</router-link>
             </div>
 
             <button

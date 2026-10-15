@@ -81,6 +81,74 @@ router.post('/login', loginRateLimit, async (req, res) => {
   })
 })
 
+// ===== 忘记密码 =====
+// 验证码暂存内存（单实例部署足够；多实例需换 Redis）。TTL 5 分钟，同号 60 秒内不可重发。
+const RESET_CODE_TTL_MS = 5 * 60 * 1000
+const RESET_CODE_RESEND_COOLDOWN_MS = 60 * 1000
+const resetCodeStore = new Map()
+
+router.post('/reset-code', loginRateLimit, async (req, res) => {
+  const { username } = req.body
+
+  if (!username || !isValidPhone(username)) {
+    return res.status(400).json({ error: '请输入正确的手机号' })
+  }
+
+  const now = Date.now()
+  const existing = resetCodeStore.get(username)
+  if (existing && existing.sentAt + RESET_CODE_RESEND_COOLDOWN_MS > now) {
+    const waitSeconds = Math.ceil((existing.sentAt + RESET_CODE_RESEND_COOLDOWN_MS - now) / 1000)
+    return res.status(429).json({ error: `请 ${waitSeconds} 秒后再获取验证码` })
+  }
+
+  const user = await db.prepare('SELECT id FROM users WHERE username = ? AND is_guest = 0').get(username)
+  // 统一返回成功，避免通过接口探测手机号是否注册
+  if (user) {
+    const code = String(Math.floor(100000 + Math.random() * 900000))
+    resetCodeStore.set(username, { code, expiresAt: now + RESET_CODE_TTL_MS, sentAt: now })
+    // TODO: 接入短信通道后，在这里发送验证码短信
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[reset-code] ${username} 验证码: ${code}`)
+    }
+  }
+
+  res.json({ success: true, message: '如该手机号已注册，验证码将在 5 分钟内有效' })
+})
+
+router.post('/reset-password', loginRateLimit, async (req, res) => {
+  const { username, code, password } = req.body
+
+  if (!username || !isValidPhone(username)) {
+    return res.status(400).json({ error: '请输入正确的手机号' })
+  }
+  if (!code || !password) {
+    return res.status(400).json({ error: '验证码和新密码不能为空' })
+  }
+  if (password.length < 6) {
+    return res.status(400).json({ error: '密码至少6位' })
+  }
+
+  const stored = resetCodeStore.get(username)
+  if (!stored || stored.expiresAt < Date.now()) {
+    resetCodeStore.delete(username)
+    return res.status(400).json({ error: '验证码已过期，请重新获取' })
+  }
+  if (stored.code !== String(code).trim()) {
+    return res.status(400).json({ error: '验证码不正确' })
+  }
+
+  const user = await db.prepare('SELECT id FROM users WHERE username = ? AND is_guest = 0').get(username)
+  if (!user) {
+    resetCodeStore.delete(username)
+    return res.status(400).json({ error: '验证码不正确' })
+  }
+
+  await db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(hashPassword(password), user.id)
+  resetCodeStore.delete(username)
+
+  res.json({ success: true, message: '密码已重置，请使用新密码登录' })
+})
+
 // 获取当前用户信息（含班级与使用统计）
 router.get('/me', authMiddleware, async (req, res) => {
   const user = await db.prepare('SELECT id, username, is_guest, created_at FROM users WHERE id = ?').get(req.userId)
