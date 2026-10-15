@@ -58,10 +58,10 @@ const planFaqs = [
 const loggedIn = computed(() => Boolean(localStorage.getItem('token')))
 
 function goVip() {
-  router.push(loggedIn.value ? '/vip' : '/login')
+  window.open(router.resolve(loggedIn.value ? '/vip' : '/login').href, '_blank', 'noopener,noreferrer')
 }
 function goStart() {
-  router.push(loggedIn.value ? '/app' : '/register')
+  window.open(router.resolve(loggedIn.value ? '/app' : '/register').href, '_blank', 'noopener,noreferrer')
 }
 </script>
 

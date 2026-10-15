@@ -52,7 +52,7 @@ const faqs = [
 ]
 
 function goWorkbench() {
-  router.push('/app')
+  window.open(router.resolve('/app').href, '_blank', 'noopener,noreferrer')
 }
 function goDemo() {
   // 进入演示班级：/app?demo=1 由工作台自动拉起演示模式
