@@ -296,7 +296,7 @@ async function bootstrap() {
 
   registerFrontendRoutes()
 
-  return app.listen(PORT, () => {
+  return app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`)
     if (hasFrontendBuild) {
       console.log('📦 已启用前端静态资源托管')
