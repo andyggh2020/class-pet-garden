@@ -151,9 +151,9 @@ function formatNotificationTime(timestamp: number) {
   <div class="min-h-screen bg-[#fffaf5] font-sans text-[#38281f]">
     <header class="sticky top-0 z-40 border-b border-[#f1e5db] bg-[#fffdfb]/95 px-4 py-3 backdrop-blur transition-all duration-300 sm:px-6 lg:hidden" :class="navigationDimmed ? 'opacity-40 grayscale pointer-events-none select-none' : ''">
       <div class="mx-auto flex max-w-7xl items-center justify-between gap-3">
-        <router-link :to="{ path: '/', query: { landing: '1' } }" class="flex min-w-0 items-center gap-2.5">
-          <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-[#ffe7c8] text-xl text-[#d97706]">🐾</span>
-          <span class="min-w-0"><span class="block truncate font-serif text-lg font-bold text-[#422d20]">{{ title }}</span><span class="block truncate text-sm text-[#9a735d]">{{ eyebrow }}</span></span>
+        <router-link :to="{ path: '/', query: { landing: '1' } }" class="flex min-w-0 items-center gap-3">
+          <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#ffe7c8] to-[#ffd9b3] text-2xl text-[#d97706] shadow-[0_4px_12px_rgba(217,119,6,0.18)]">🐾</span>
+          <span class="min-w-0"><span class="block truncate font-serif text-xl font-bold leading-tight text-[#422d20]">{{ title }}</span><span class="block truncate text-sm text-[#9a735d]">{{ eyebrow }}</span></span>
         </router-link>
         <router-link to="/preview" class="flex h-10 items-center rounded-xl bg-[#fff1e6] px-3 text-sm font-semibold text-[#b85e25]">图鉴</router-link>
       </div>
@@ -161,9 +161,9 @@ function formatNotificationTime(timestamp: number) {
 
     <div class="mx-auto flex max-w-[1728px] gap-5 px-3 pb-3 pt-3 lg:px-5 lg:pb-5 lg:pt-5">
       <aside class="sticky top-3 hidden h-[calc(100vh-24px)] w-60 shrink-0 flex-col rounded-[1.75rem] border border-[#f1e5db] bg-[#fffdf9] p-4 shadow-[0_12px_36px_rgba(116,76,45,0.07)] transition-all duration-300 lg:top-5 lg:flex lg:h-[calc(100vh-40px)]" :class="navigationDimmed ? 'opacity-40 grayscale pointer-events-none select-none' : ''">
-        <router-link :to="{ path: '/', query: { landing: '1' } }" class="flex min-w-0 items-center gap-3 px-2 py-2">
-          <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[#ffe7c8] text-[#d97706] shadow-sm"><span class="material-symbols-rounded text-[24px]">pets</span></span>
-          <span class="min-w-0 flex-1"><span class="block truncate font-serif text-xl font-bold text-[#422d20]">{{ title }}</span><span class="mt-0.5 block truncate text-sm font-semibold leading-none tracking-[0.05em] text-[#b58b70]">{{ eyebrow }}</span></span>
+        <router-link :to="{ path: '/', query: { landing: '1' } }" class="group flex min-w-0 items-center gap-3.5 rounded-2xl px-2 py-2.5 transition hover:bg-[#fff7f1]">
+          <span class="flex h-14 w-14 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-[#ffe7c8] to-[#ffd9b3] text-[#d97706] shadow-[0_6px_16px_rgba(217,119,6,0.18)] transition group-hover:shadow-[0_8px_22px_rgba(217,119,6,0.28)]"><span class="material-symbols-rounded text-[30px]">pets</span></span>
+          <span class="min-w-0 flex-1"><span class="block truncate font-serif text-2xl font-bold leading-tight text-[#422d20]">{{ title }}</span><span class="mt-1 block truncate text-sm font-semibold leading-none tracking-[0.08em] text-[#b58b70]">{{ eyebrow }}</span></span>
         </router-link>
 
         <nav class="mt-5 space-y-1.5" aria-label="主导航">
