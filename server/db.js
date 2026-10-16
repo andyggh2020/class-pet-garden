@@ -101,6 +101,8 @@ export const db = createDbInterface()
 
 export async function initDb() {
   const pool = getPool()
+  // 强制连接字符集为 utf8mb4，避免中文数据写入时出现乱码/语法错误
+  await pool.query('SET NAMES utf8mb4')
   const statements = [
     // username 用 191 而非 255：utf8mb4 下 191*4=764 字节，
     // 兼容 MySQL 5.5/5.6 的 767 字节索引上限（255 会报 Specified key was too long）
